@@ -1,16 +1,16 @@
 package pieces;
 
-import board.Board;
+import board.Board.Position;
 import board.Cell;
 import board.Color;
-
+import board.Move;
 import utils.Pair;
-
+import java.util.List;
 import java.util.ArrayList;
+import figureset.FigureSetManager;
 
 public abstract class Piece {
     protected final Color color;
-    private boolean hasMoved = false;
 
     public Piece(final Color color) {
         this.color = color;
@@ -20,46 +20,46 @@ public abstract class Piece {
         return color;
     }
 
-    public boolean hasMoved() {
-        return hasMoved;
-    }
-
-    public void move() {
-        hasMoved = true;
-    }
-
     public boolean canJump() {
         return false;
     }
 
-    public abstract char getSymbol();
-    public abstract ArrayList<Pair> getBasicDeltas();
+    public char getSymbol() {
+        return FigureSetManager.getSymbol(this);
+    }
 
-    public ArrayList<Cell> getBasicLegalMoves(Cell initial, Board board) {
-        ArrayList<Cell> moves = new ArrayList<>();
-        ArrayList<Pair> deltas = getBasicDeltas();
+    public abstract boolean validMoveDelta(final int dr, final int dc);
+
+    public boolean validAttackDelta(final int dr, final int dc) {
+        return validMoveDelta(dr, dc);
+    }
+
+    public abstract List<Pair> getBasicDeltas();
+
+    public List<Move> getBasicLegalMoves(final Cell initial, final Position position) {
+        List<Move> moves = new ArrayList<>();
+        List<Pair> deltas = getBasicDeltas();
         for (Pair delta : deltas) {
-            int dx = delta.first();
-            int dy = delta.second();
-            Cell shifted = initial.shift(dx, dy);
-            boolean legal = shifted.withinBounds() && board.canOccupy(shifted, this);
+            Cell shifted = initial.shift(delta.first(), delta.second());
+            boolean legal = shifted.withinBounds() && position.canOccupy(this, shifted);
             if (!canJump()) {
-                legal &= board.isFreePathBetween(initial, shifted);
+                legal &= position.isFreePathBetween(initial, shifted);
             }
             if (legal) {
-                moves.add(shifted);
+                moves.add(new Move(initial, shifted));
             }
         }
         return moves;
     }
 
-    public abstract ArrayList<Cell> getAdditionalLegalMoves(Cell initial, Board board, Cell lastMove);
+    public List<Move> getAdditionalLegalMoves(final Cell initial, final Position position, final Move lastMove) {
+        return new ArrayList<>();
+    }
 
-    public ArrayList<Cell> getLegalMoves(Cell initial, Board board, Cell lastMove) {
-        ArrayList<Cell> moves = new ArrayList<>();
-        ArrayList<Cell> basic = getBasicLegalMoves(initial, board);
-        moves.addAll(basic);
-        ArrayList<Cell> additional = getAdditionalLegalMoves(initial, board, lastMove);
+    public List<Move> getLegalMoves(final Cell initial, final Position position, final Move lastMove) {
+        List<Move> basic = getBasicLegalMoves(initial, position);
+        List<Move> moves = new ArrayList<>(basic);
+        List<Move> additional = getAdditionalLegalMoves(initial, position, lastMove);
         moves.addAll(additional);
         return moves;
     }

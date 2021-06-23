@@ -1,41 +1,44 @@
 package board;
 
-import utils.Pair;
+import static utils.Global.SIZE;
 
 public class Cell {
-    private int row, col;
+    private final int row, col;
+
     public Cell(final int row, final int col) {
         this.row = row;
         this.col = col;
     }
+
+    public Cell(final String coordinate) {
+        this.row = SIZE - (coordinate.charAt(1) - '0');
+        this.col = coordinate.charAt(0) - 'a';
+        if (!withinBounds()) {
+            throw new IllegalArgumentException(coordinate + " is not a valid cell on a " + SIZE + "*" + SIZE + " chessboard.");
+        }
+    }
+
     public int getRow() {
         return row;
     }
+
     public int getCol() {
         return col;
     }
-    public Cell shift(final int dx, final int dy) {
-        return new Cell(row + dx, col + dy);
+
+    public Cell shift(final int dr, final int dc) {
+        return new Cell(row + dr, col + dc);
     }
-    public Cell shift(final Pair pair) {
-        return shift(pair.first(), pair.second());
-    }
+
     public boolean withinBounds() {
-        return 0 <= row && row < 8 && 0 <= col && col < 8;
+        return 0 <= row && row < SIZE && 0 <= col && col < SIZE;
     }
-    public String coordinate() {
-        return (char)(col + 'a') + "" + (8 - row);
-    }
-    // TODO: error handling
-    public static Cell from(String coordinate) {
-        int row = 8 - (coordinate.charAt(1) - '0');
-        int col = coordinate.charAt(0) - 'a';
-        return new Cell(row, col);
-    }
+
     @Override
     public String toString() {
-        return "(" + row + ", " + col + ")";
+        return (char)(col + 'a') + "" + (SIZE - row);
     }
+
     @Override
     public boolean equals(Object other) {
         if (other instanceof Cell) {
@@ -43,5 +46,10 @@ public class Cell {
             return row == cell.row && col == cell.col;
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return row * SIZE + col;
     }
 }

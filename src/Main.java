@@ -1,16 +1,16 @@
 import board.*;
+
 import java.util.*;
+
 public class Main {
     public static void main(String[] args) {
-        Board board = new Board();
-        System.out.println(board);
         Scanner in = new Scanner(System.in);
+        Board board = new Board(new Board.Position("RNBQKBNR"));
         while (true) {
+            System.out.println(board);
             String a = in.next();
             String b = in.next();
-            Cell ca = Cell.from(a);
-            Cell cb = Cell.from(b);
-            System.out.println(board.isLegalMove(ca, cb, null));
+            board.makeMove(new Move(new Cell(a), new Cell(b)));
         }
     }
 }
