@@ -19,24 +19,19 @@ public class Move {
     private MoveCategory category;
 
     /**
-     * Constructor of {@code Move}.
-     * <br><br>
+     * Constructor of {@code Move}. <br><br>
      *
-     * This constructor should be used for  moves (except pawn promotions), whose category is not yet
-     * known (for example, moves read from the input stream).
-     * <br><br>
+     * This constructor should be used for moves (except pawn promotions), whose category is not yet known (for example,
+     * moves read from the input stream). <br><br>
      *
-     * By default {@code promoted} is set to {@code null}, which means that the current move is not
-     * a pawn promotion. Moves that are pawn promotions should not use this constructor.
-     * <br><br>
+     * By default {@code promoted} is set to {@code null}, which means that the current move is not a pawn promotion.
+     * Moves that are pawn promotions should not use this constructor. <br><br>
      *
-     * The move's category is set automatically (see {@link #categorize()}). It is the caller's responsibility
-     * to ensure that the parameters are set correctly, otherwise, the move can be mistakenly set the wrong
-     * category.
-     * <br><br>
+     * The move's category is set automatically (see {@link #categorize()}). It is the caller's responsibility to ensure
+     * that the parameters are set correctly, otherwise, the move can be mistakenly set the wrong category. <br><br>
      *
-     * If this is a castling move, then {@code target} should be the cell of the corresponding rook. Otherwise,
-     * {@code target} should be the destination cell of the piece making the move.
+     * If this is a castling move, then {@code target} should be the cell of the corresponding rook. Otherwise, {@code
+     * target} should be the destination cell of the piece making the move.
      *
      * @param start the source cell (i.e. where the piece moved <i>from</i>)
      * @param target the target cell (i.e. where the piece moved <i>to</i>, except for castling)
@@ -53,10 +48,9 @@ public class Move {
      * Constructor of {@code Move}.
      * <br><br>
      *
-     * This constructor should only be used for pawn promotions. {@code promoted} is one of {@code {"Q", "R",
-     * "B", "N"}} denoting the piece that the pawn promoted to. It is the caller's responsibility to ensure
-     * that all the parameters are correct, otherwise the move can be mistakenly set the wrong category.
-     * <br><br>
+     * This constructor should only be used for pawn promotions. {@code promoted} is one of {@code {"Q", "R", "B", "N"}}
+     * denoting the piece that the pawn promoted to. It is the caller's responsibility to ensure that all the parameters
+     * are correct, otherwise the move can be mistakenly set the wrong category. <br><br>
      *
      * As in the other constructors, the move's category is set automatically (see {@link #categorize()}).
      *
@@ -76,21 +70,21 @@ public class Move {
      * Constructor of {@code Move}.
      * <br><br>
      *
-     * This constructor should be used for moves (except pawn promotions), whose category is already known
-     * (for example, algorithm-generated moves).
-     * <br><br>
+     * This constructor should be used for moves (except pawn promotions), whose category is already known (for example,
+     * algorithm-generated moves). <br><br>
      *
-     * By default {@code promoted} is set to {@code null}, which means that the current move is not
-     * a pawn promotion. Moves that are pawn promotions should not use this constructor.
-     * <br><br>
+     * By default {@code promoted} is set to {@code null}, which means that the current move is not a pawn promotion.
+     * Moves that are pawn promotions should not use this constructor. <br><br>
      *
      * It is the caller's responsibility to ensure that the parameters are consistent and denote a valid move.
      *
      * @param start the source cell (i.e. where the piece moved <i>from</i>)
-     * @param target the target cell (i.e. where the piece moved <i>to</i>) or cell of corresponding rook
-     *              if castling
+     * @param target the target cell (i.e. where the piece moved <i>to</i>) or cell of corresponding rook if castling
      * @param piece the piece that made the move
      * @param category a {@code MoveCategory}
+     *
+     * @see #Move(Cell, Cell, Piece) Move(Cell, Cell, Piece)
+     * @see #Move(Cell, Cell, Piece, String) <br>Move(Cell, Cell, Piece, String)
      */
     public Move(Cell start, Cell target, Piece piece, MoveCategory category) {
         this(start, target, piece, category, null);
@@ -100,8 +94,7 @@ public class Move {
      * Private constructor setting all private fields of this move from parameters.
      *
      * @param start the source cell (i.e. where the piece moved <i>from</i>)
-     * @param target the target cell (i.e. where the piece moved <i>to</i>) or cell of corresponding
-     *               rook if castling
+     * @param target the target cell (i.e. where the piece moved <i>to</i>) or cell of corresponding rook if castling
      * @param piece the piece that made the move
      * @param category a {@code MoveCategory}
      * @param promoted the symbol of the promoted cell, or {@code null} if not a promotion
@@ -123,8 +116,7 @@ public class Move {
     }
 
     /**
-     * @return the destination cell (i.e. where the piece moved <i>to</i>) or cell of corresponding rook
-     * if castling
+     * @return the destination cell (i.e. where the piece moved <i>to</i>) or cell of corresponding rook if castling
      */
     public Cell getTarget() {
         return target;
@@ -145,12 +137,10 @@ public class Move {
     }
 
     /**
-     * Private method that assigns a category to this move, if not already.
-     * <br><br>
+     * Private method that assigns a category to this move, if not already. <br><br>
      *
-     * Based on the structure of the current move, determines whether it is a special move (i.e.
-     * castling, pawn promotion or en passant capture) or not, and updates {@code category} accordingly.
-     * <br><br>
+     * Based on the structure of the current move, determines whether it is a special move (i.e. castling, pawn
+     * promotion or en passant capture) or not, and updates {@code category} accordingly. <br><br>
      *
      * Assumes that the move is valid. If parameters are incorrect, the move can be categorized incorrectly.
      */
@@ -199,9 +189,9 @@ public class Move {
     }
 
     /**
-     * Represents a move in full chess notation, {@code Px0-y0}, where:
+     * Represents a move in full chess notation, {@code Ax0-y0}, where:
      * <ul>
-     *     <li>{@code P} is the symbol of the piece making the move,</li>
+     *     <li>{@code A} is the symbol of the piece making the move,</li>
      *     <li>{@code x0} is the coordinate of the start cell,</li>
      *     <li>{@code x1} is the coordinate of the target cell</li>
      * </ul>
