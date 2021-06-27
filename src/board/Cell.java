@@ -68,6 +68,18 @@ public class Cell {
     }
 
     /**
+     * Determines whether this cell is adjacent to another cell passed as a parameter.
+     *
+     * @param other a {@code Cell}
+     * @return {@code true} if this cell is adjacent to {@code other}, {@code false} otherwise
+     */
+    public boolean isAdjacentTo(Cell other) {
+        int dr = other.getRow() - getRow();
+        int dc = other.getCol() - getCol();
+        return dr * dr + dc * dc == 1;
+    }
+
+    /**
      * @return the string representation of this cell in chess notation
      *
      * @see #Cell(String) Cell(String)
