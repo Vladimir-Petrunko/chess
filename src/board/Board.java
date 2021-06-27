@@ -117,6 +117,42 @@ public class Board {
         }
 
         /**
+         * Returns the color of a piece in a given cell.
+         *
+         * @param cell a {@code Cell}
+         *
+         * @return the color of the piece in {@code cell}, or {@code null} if there is no piece in {@code cell}
+         */
+        public Color getColor(Cell cell) {
+            Piece piece = get(cell);
+            return piece == null ? null : piece.getColor();
+        }
+
+        /**
+         * Returns the leftmost column index, from the point of view of a particular color. (By default, the orientation
+         * is standard: black pieces above, white pieces below).
+         *
+         * @param color a {@code color}
+         *
+         * @return the leftmost column index, from the point of view of {@code color}
+         */
+        public int getLeftmostColumn(Color color) {
+            return color == Color.WHITE ? 0 : SIZE - 1;
+        }
+
+        /**
+         * Returns the rightmost column index, from the point of view of a particular color. (By default, the orientation
+         * is standard: black pieces above, white pieces below).
+         *
+         * @param color a {@code color}
+         *
+         * @return the rightmost column index, from the point of view of {@code color}
+         */
+        public int getRightmostColumn(Color color) {
+            return color == Color.WHITE ? SIZE - 1 : 0;
+        }
+
+        /**
          * Private method that sets the contents of the given cell to a particular piece.<br><br>
          *
          * The method is private to enable encapsulation: it is impossible to directly alter the contents of a position
