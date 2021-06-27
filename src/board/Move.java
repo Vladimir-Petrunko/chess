@@ -207,12 +207,10 @@ public class Move {
      * Computes the hash code of this move. It is guaranteed that, independent of the size of the board, there is a
      * one-to-one mapping between hash codes of moves and non-negative integers in the interval {@code [0, N]} for
      * some {@code N}. If the size is small enough (but it can still be significantly larger than the default value
-     * of 8), these hash codes fit into {@code int} and thus are distinct.
+     * of 8), these hash codes fit into Java's {@code int} and thus are distinct.
      * <br><br>
      *
      * Allows for more efficient storage of objects of type {@code Move} in hash tables.
-     *
-     * @return the computed hash code
      */
     @Override
     public int hashCode() {
