@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.ArrayList;
 import board.Color;
 import utils.Pair;
-
 import static utils.Global.SIZE;
 
 public class Bishop extends Piece {

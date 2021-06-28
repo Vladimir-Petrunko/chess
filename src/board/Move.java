@@ -28,17 +28,13 @@ public class Move {
      * Moves that are pawn promotions should not use this constructor. <br><br>
      *
      * The move's category is set automatically (see {@link #categorize()}). It is the caller's responsibility to ensure
-     * that the parameters are set correctly, otherwise, the move can be mistakenly set the wrong category. <br><br>
-     *
-     * If this is a castling move, then {@code target} should be the cell of the corresponding rook. Otherwise, {@code
-     * target} should be the destination cell of the piece making the move.
+     * that the parameters are set correctly, otherwise, the move can be mistakenly set the wrong category.
      *
      * @param start the source cell (i.e. where the piece moved <i>from</i>)
-     * @param target the target cell (i.e. where the piece moved <i>to</i>, except for castling)
+     * @param target the target cell (i.e. where the piece moved <i>to</i>)
      * @param piece the piece that made the move
-     *
-     * @see #Move(Cell, Cell, Piece, String) Move(Cell, Cell, Piece, String)
-     * @see #Move(Cell, Cell, Piece, MoveCategory) <br>Move(Cell, Cell, Piece, MoveCategory)
+     * @see #Move(Cell, Cell, Piece, String)
+     * @see #Move(Cell, Cell, Piece, MoveCategory)
      */
     public Move(Cell start, Cell target, Piece piece) {
         this(start, target, piece, MoveCategory.UNCATEGORIZED, null);
@@ -58,9 +54,8 @@ public class Move {
      * @param target the target cell (i.e. where the piece moved <i>to</i>)
      * @param piece the piece that made the move (should have type {@code Pawn})
      * @param promoted the symbol of the promoted piece
-     *
-     * @see #Move(Cell, Cell, Piece) Move(Cell, Cell, Piece)
-     * @see #Move(Cell, Cell, Piece, MoveCategory) <br>Move(Cell, Cell, Piece, MoveCategory)
+     * @see #Move(Cell, Cell, Piece)
+     * @see #Move(Cell, Cell, Piece, MoveCategory)
      */
     public Move(Cell start, Cell target, Piece piece, String promoted) {
         this(start, target, piece, MoveCategory.UNCATEGORIZED, promoted);
@@ -79,12 +74,11 @@ public class Move {
      * It is the caller's responsibility to ensure that the parameters are consistent and denote a valid move.
      *
      * @param start the source cell (i.e. where the piece moved <i>from</i>)
-     * @param target the target cell (i.e. where the piece moved <i>to</i>) or cell of corresponding rook if castling
+     * @param target the target cell (i.e. where the piece moved <i>to</i>)
      * @param piece the piece that made the move
      * @param category a {@code MoveCategory}
-     *
-     * @see #Move(Cell, Cell, Piece) Move(Cell, Cell, Piece)
-     * @see #Move(Cell, Cell, Piece, String) <br>Move(Cell, Cell, Piece, String)
+     * @see #Move(Cell, Cell, Piece)
+     * @see #Move(Cell, Cell, Piece, String)
      */
     public Move(Cell start, Cell target, Piece piece, MoveCategory category) {
         this(start, target, piece, category, null);
@@ -94,7 +88,7 @@ public class Move {
      * Private constructor setting all private fields of this move from parameters.
      *
      * @param start the source cell (i.e. where the piece moved <i>from</i>)
-     * @param target the target cell (i.e. where the piece moved <i>to</i>) or cell of corresponding rook if castling
+     * @param target the target cell (i.e. where the piece moved <i>to</i>)
      * @param piece the piece that made the move
      * @param category a {@code MoveCategory}
      * @param promoted the symbol of the promoted cell, or {@code null} if not a promotion
@@ -116,7 +110,7 @@ public class Move {
     }
 
     /**
-     * @return the destination cell (i.e. where the piece moved <i>to</i>) or cell of corresponding rook if castling
+     * @return the destination cell (i.e. where the piece moved <i>to</i>)
      */
     public Cell getTarget() {
         return target;

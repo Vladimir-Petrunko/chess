@@ -18,12 +18,6 @@ public class HumanPlayer implements Player {
     private final Scanner in;
     private final PrintStream out;
 
-    /**
-     * Constructor of {@code HumanPlayer} from I/O streams provided as parameters.
-     *
-     * @param in an {@code InputStream}
-     * @param out an {@code OutputStream}
-     */
     public HumanPlayer(InputStream in, PrintStream out) {
         this.in = new Scanner(in);
         this.out = out;

@@ -7,9 +7,9 @@ public class Cell {
     private final int row, col;
 
     /**
-     * Constructor of {@code Cell}. Just sets private fields.<br><br>
+     * Default constructor of {@code Cell}. Just sets private fields.<br><br>
      *
-     * Note that both the row and column are numbered from 0.
+     * Note that both the row and column are indexed from 0.
      *
      * @param row the cell's row index
      * @param col the cell's column index
@@ -71,7 +71,7 @@ public class Cell {
      * Determines whether this cell is beside (i.e. to the left or right) another cell passed as a parameter.
      *
      * @param other a {@code Cell}
-     * @return {@code true} if this cell is beside {@code other}, {@code false} otherwise
+     * @return {@code true} if this cell is beside {@code other}, or {@code false} otherwise
      */
     public boolean isBeside(Cell other) {
         int dr = other.getRow() - getRow();
@@ -81,8 +81,7 @@ public class Cell {
 
     /**
      * @return the string representation of this cell in chess notation
-     *
-     * @see #Cell(String) Cell(String)
+     * @see #Cell(String)
      */
     @Override
     public String toString() {

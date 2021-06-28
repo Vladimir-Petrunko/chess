@@ -1,6 +1,7 @@
 package board;
 
 public enum MoveCategory {
+    // TODO: add full support of en passant (maybe not in MoveCategory, but somewhere...)
     // Should be self-explanatory enough
     UNCATEGORIZED,
     ORDINARY,

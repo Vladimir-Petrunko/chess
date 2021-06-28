@@ -1,14 +1,10 @@
 package board;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import pieces.*;
 import utils.FreePathChecker;
 import utils.Pair;
-
 import static utils.Global.CASTLING_DELTA;
 import static utils.Global.SIZE;
 
@@ -26,12 +22,15 @@ public class Board {
         private final Piece[][] grid = new Piece[SIZE][SIZE];
         private final int[][] movesMade = new int[SIZE][SIZE];
         private final Cell[] kings = new Cell[2];
-        private final List<Cell>[] pieces = new List[]{new ArrayList<>(), new ArrayList<>()};
+        private final HashSet<Cell>[] pieces = new HashSet[]{new HashSet<>(), new HashSet<>()};
         private final FreePathChecker checker = new FreePathChecker(SIZE);
         private Move lastMove = null;
 
         /**
-         * Private method that initializes all elements of the {@code movesMade} array to {@code 0}.
+         * Private method that initializes all elements of the {@code movesMade} array to {@code 0}. <br><br>
+         *
+         * {@code movesMade[i][j]} represents the number of times that the piece currently located at {@code (i, j)}
+         * moved.
          */
         private void initHasMoved() {
             for (int i = 0; i < SIZE; i++) {
@@ -39,16 +38,21 @@ public class Board {
             }
         }
 
+        // TODO: generalize to sizes not equal to 8
+        /**
+         * Initializes a new {@code Position} from a default back rank ordering. Currently not adapted to sizes other
+         * than the default value of 8.
+         */
         public Position() {
             this("RNBQKBNR");
         }
 
         /**
-         * Constructor of {@code Position} from a back rank order.<br><br>
+         * Initializes a new {@code Position} from a provided back rank ordering.
          *
          * The back rank order should have length {@code SIZE} and consist of characters from the set {@code {"Q", "R",
          * "B", "N", "K"}} or their lowercase variants. This string represents the left-to-right order of pieces on the
-         * back rank, as viewed in the traditional chessboard topology (black pieces on top, white pieces below).
+         * back rank, as viewed in the traditional chessboard orientation (black pieces above, white pieces below).
          *
          * @param order the back rank order, as described above
          */
@@ -80,7 +84,7 @@ public class Board {
         }
 
         /**
-         * Constructor of {@code Position} from a custom matrix of pieces.
+         * Initializes a new {@code Position} from a custom piece arrangement
          *
          * @param grid a 2-dimensional array of pieces
          */
@@ -90,17 +94,15 @@ public class Board {
                     set(i, j, grid[i][j], 0);
                 }
             }
-            initHasMoved();
+            initHasMoved(); // because we touched elements of hasMoved
         }
 
         /**
          * Returns the piece located at the given cell.
          *
          * @param cell a {@code Cell}
-         *
          * @return the piece located at {@code cell}
-         * 
-         * @see #get(int, int) get(int, int)
+         * @see #get(int, int)
          */
         public Piece get(Cell cell) {
             return get(cell.getRow(), cell.getCol());
@@ -109,12 +111,10 @@ public class Board {
         /**
          * Returns the piece located at the given cell.
          *
-         * @param row the row index of a cell
-         * @param col the column index of a cell
-         *
-         * @return the piece located at {@code cell}
-         *
-         * @see #get(Cell) get(Cell)
+         * @param row the row index of the cell
+         * @param col the column index of the cell
+         * @return the piece located at {@code (row, col)}
+         * @see #get(Cell)
          */
         public Piece get(int row, int col) {
             return grid[row][col];
@@ -124,7 +124,6 @@ public class Board {
          * Returns the color of a piece in a given cell.
          *
          * @param cell a {@code Cell}
-         *
          * @return the color of the piece in {@code cell}, or {@code null} if there is no piece in {@code cell}
          */
         public Color getColor(Cell cell) {
@@ -135,14 +134,13 @@ public class Board {
         /**
          * Private method that sets the contents of the given cell to a particular piece.<br><br>
          *
-         * The method is private to enable encapsulation: it is impossible to directly alter the contents of a position
+         * This method is private to enable encapsulation: it is impossible to directly alter the contents of a position
          * from outside, as {@code Position} is an inner class of {@code Board}.
          *
          * @param cell a {@code Cell}
          * @param piece a {@code Piece}
          * @param pieceMoveCount the number of moves made by {@code piece} before
-         *
-         * @see #set(int, int, Piece, int) set(int, int, Piece, int)
+         * @see #set(int, int, Piece, int)
          */
         private void set(Cell cell, Piece piece, int pieceMoveCount) {
             set(cell.getRow(), cell.getCol(), piece, pieceMoveCount);
@@ -158,22 +156,21 @@ public class Board {
          * @param col the column index of the cell
          * @param piece a {@code Piece}
          * @param pieceMoveCount the number of moves made by {@code piece} before
-         *
-         * @see #set(Cell, Piece, int) set(Cell, Piece, int)
+         * @see #set(Cell, Piece, int)
          */
         private void set(int row, int col, Piece piece, int pieceMoveCount) {
             if (piece == null) {
                 clear(row, col);
-                return;
-            }
-            grid[row][col] = piece;
-            checker.set(row, col);
-            movesMade[row][col] = pieceMoveCount + 1;
-            Cell cell = new Cell(row, col);
-            int index = piece.getColor() == Color.WHITE ? 0 : 1;
-            pieces[index].add(cell);
-            if (piece instanceof King) {
-                kings[index] = cell;
+            } else {
+                grid[row][col] = piece;
+                checker.set(row, col);
+                movesMade[row][col] = pieceMoveCount + 1;
+                Cell cell = new Cell(row, col);
+                int index = piece.getColor() == Color.WHITE ? 0 : 1;
+                pieces[index].add(cell);
+                if (piece instanceof King) {
+                    kings[index] = cell;
+                }
             }
         }
 
@@ -182,8 +179,14 @@ public class Board {
          *
          * @param row the row index of the cell
          * @param col the column index of the cell
+         * @see #clear(Cell)
          */
         private void clear(int row, int col) {
+            Piece piece = grid[row][col];
+            if (piece != null) {
+                int index = piece.getColor() == Color.WHITE ? 0 : 1;
+                pieces[index].remove(new Cell(row, col));
+            }
             grid[row][col] = null;
             checker.remove(row, col);
             movesMade[row][col] = 0;
@@ -193,20 +196,20 @@ public class Board {
          * Private method that clears the contents of a given cell.
          *
          * @param cell a {@code Cell}
+         * @see #clear(int, int)
          */
         private void clear(Cell cell) {
             clear(cell.getRow(), cell.getCol());
         }
 
         /**
-         * Private method that moves the piece from a source cell to a target cell.<br><br>
+         * Private method that moves a piece from its initial cell to a target cell.<br><br>
          *
          * This method should be only called when the source cell contains a piece.
          *
-         * @param start a {@code Cell}
-         * @param target a {@code Cell}
-         *
-         * @see #unmove(Cell, Cell) unmove(Cell, Cell)
+         * @param start the initial cell of the piece
+         * @param target the target cell of the piece
+         * @see #unmove(Cell, Cell)
          */
         private void move(Cell start, Cell target) {
             int cnt = movesMade(start);
@@ -218,8 +221,12 @@ public class Board {
         /**
          * Private method that cancels a move from a source cell to a target cell.<br><br>
          *
-         * @param start a {@code Cell}
-         * @param target a {@code Cell}
+         * Since move counts are affected in a non-obvious way, this method should be called after a corresponding call
+         * to {@link #move(Cell, Cell)}.
+         *
+         * @param start the former initial cell of the piece
+         * @param target the former target cell of the piece
+         * @see #move(Cell, Cell)
          */
         private void unmove(Cell start, Cell target) {
             int cnt = movesMade(target);
@@ -229,23 +236,10 @@ public class Board {
         }
 
         /**
-         * Private method that shifts the piece located in a particular cell. Helps avoid code duplication when handling
-         * castling.
-         *
-         * @param cell a {@code Cell}
-         * @param dr the row displacement
-         * @param dc the column displacement
-         */
-        private void shift(Cell cell, int dr, int dc) {
-            move(cell, cell.shift(dr, dc));
-        }
-
-        /**
          * Determines whether the given cell is occupied (i.e. contains a piece).
          *
          * @param cell a {@code Cell}
-         *
-         * @return {@code true} if {@code cell} is occupied, {@code false} otherwise
+         * @return {@code true} if {@code cell} is occupied, or {@code false} otherwise
          */
         public boolean isOccupied(Cell cell) {
             return get(cell) != null;
@@ -256,11 +250,10 @@ public class Board {
          *
          * This method is useful, for example, when checking the legality of castling: by the rules of chess, one of the
          * necessary preconditions of a castling move is that both the king and the rook in question must not have moved
-         * before.
+         * before. There may be other uses as well.
          *
          * @param cell a {@code Cell}
-         *
-         * @return {@code true} if the piece located at {@code cell} has moved before, {@code false} otherwise
+         * @return {@code true} if the piece located at {@code cell} has moved before, or {@code false} otherwise
          */
         public boolean hasMoved(Cell cell) {
             return movesMade[cell.getRow()][cell.getCol()] > 0;
@@ -270,7 +263,6 @@ public class Board {
          * Determines the number of moves made by a piece located at the given cell.
          *
          * @param cell a {@code Cell}
-         *
          * @return the number of moves made by the piece located at {@code cell}
          */
         public int movesMade(Cell cell) {
@@ -281,7 +273,6 @@ public class Board {
          * Returns the cell currently containing the king of the given color.
          *
          * @param color a {@code Color}
-         *
          * @return the cell currently containing the king of the color {@code color}
          */
         public Cell getKingCell(Color color) {
@@ -296,8 +287,7 @@ public class Board {
          *
          * @param piece a {@code Piece}
          * @param cell a {@code Cell}
-         *
-         * @return {@code true} if {@code piece} could occupy {@code cell}, {@code false} otherwise
+         * @return {@code true} if {@code piece} could occupy {@code cell}, or {@code false} otherwise
          */
         public boolean canOccupy(Piece piece, Cell cell) {
             Piece p = get(cell);
@@ -309,11 +299,10 @@ public class Board {
          * diagonal path between two cells passed as parameters. Both endpoints are exclusive, i.e. only the path
          * strictly between the two cells matters.
          *
-         * @param first a {@code Cell}
-         * @param second a {@code Cell}
-         *
-         * @return {@code true} if there is a free path (as described above) between {@code first} and {@code second},
-         * {@code false} otherwise
+         * @param first one endpoint
+         * @param second the other endpoint
+         * @return {@code true} if there is a free path between {@code first} and {@code second}, exclusive, or {@code
+         * false} otherwise
          */
         public boolean isFreePathBetween(Cell first, Cell second) {
             return checker.isFreePathBetween(first, second);
@@ -321,41 +310,38 @@ public class Board {
 
         /**
          * Determines whether there is a free (that is, not consisting of pieces of any color <b>or attacked cells</b>)
-         * horizontal path between two cells in the same row passed as parameters. Both endpoints are exclusive, i.e.
-         * only the path strictly between the two cells matters.<br><br>
+         * horizontal path between two cells in the same row passed as parameters. Both endpoints are <b>exclusive, i.e.
+         * only the path strictly between the two cells matters</b>. <br><br>
          *
          * Note that the logic of this method is slightly different from the logic of {@link #isFreePathBetween(Cell,
-         * Cell)} due to the additional restriction that the intermediate cells should not be attacked.
+         * Cell)}.
          *
-         * @param first a {@code Cell}
-         * @param second a {@code Cell}
-         * @param color a {@code Color}
-         *
+         * @param first one endpoint
+         * @param second the other endpoint
+         * @param color the color of pieces that must not attack the path
          * @return {@code true} if there is a free path (as described above) between {@code first} and {@code second},
-         * {@code false} otherwise
+         * exclusive, {@code false} otherwise
          */
         public boolean isHorizontalRangeUnattacked(Cell first, Cell second, Color color) {
             int l = Math.min(first.getCol(), second.getCol());
             int r = Math.max(first.getCol(), second.getCol());
             int row = first.getRow();
-            for (int col = l; col <= r; col++) {
+            for (int col = l + 1; col < r; col++) {
                 if (isAttacked(new Cell(row, col), Color.getOppositeColor(color))) {
                     return false;
                 }
             }
-            return true;
+            return isFreePathBetween(first, second);
         }
 
         /**
          * Determines whether a given cell has a piece that attacks another given cell.<br><br>
          *
-         * If the initial cell does not contain a piece, then the method returns {@code false}. However the target cell
-         * <i>may</i> be empty.
+         * If the initial cell does not contain a piece, then the method returns {@code false}.
          *
          * @param start a {@code Cell}
          * @param target a {@code Cell}
-         *
-         * @return {@code true} if the piece located at {@code start} attacks {@code target}, {@code false} otherwise
+         * @return {@code true} if the piece located at {@code start} attacks {@code target}, or {@code false} otherwise
          */
         public boolean attacks(Cell start, Cell target) {
             Piece piece = get(start);
@@ -376,29 +362,23 @@ public class Board {
          * a pair.
          *
          * @param cell a {@code Cell}
-         *
          * @return a pair consisting of the number of "white" and "black" attacks on {@code cell}
          */
         public Pair totalAttackCount(Cell cell) {
             int white = 0;
             int black = 0;
-            for (Cell c : pieces[0]) {
-                white += attacks(c, cell) ? 1 : 0;
-            }
-            for (Cell c : pieces[1]) {
-                black += attacks(c, cell) ? 1 : 0;
-            }
+            for (Cell c : pieces[0]) white += attacks(c, cell) ? 1 : 0;
+            for (Cell c : pieces[1]) black += attacks(c, cell) ? 1 : 0;
             return new Pair(white, black);
         }
 
         /**
-         * Determines whether a given cell is attacked by any piece of a particular color.
+         * Determines whether a given cell is attacked by any piece of a given color.
          *
          * @param cell a {@code Cell}
          * @param color a {@code Color}
-         *
-         * @return {@code true} if there exists a piece of color {@code color} that attacks {@code cell}, {@code false}
-         * otherwise.
+         * @return {@code true} if there exists a piece of color {@code color} that attacks {@code cell}, or {@code
+         * false} otherwise.
          */
         public boolean isAttacked(Cell cell, Color color) {
             Pair pair = totalAttackCount(cell);
@@ -406,11 +386,10 @@ public class Board {
         }
 
         /**
-         * Determines whether the king of a particular color is in check (i.e. is attacked).
+         * Determines whether the king of a given color is in check (i.e. is attacked).
          *
          * @param color a {@code Color}
-         *
-         * @return {@code true} if the king of color {@code Color} is attacked, {@code false} otherwise
+         * @return {@code true} if the king of color {@code Color} is attacked, or {@code false} otherwise
          */
         public boolean isKingInCheck(Color color) {
             return isAttacked(getKingCell(color), Color.getOppositeColor(color));
@@ -420,10 +399,9 @@ public class Board {
          * Determines whether a move is legal. Also takes as parameter the last move in order to check the legality of
          * a possible en passant capture.
          *
-         * @param move a {@code Move}
-         * @param lastMove a {@code Move}
-         *
-         * @return {@code true} if {@code move} is legal, {@code false} otherwise
+         * @param move the move whose legality is to be checked
+         * @param lastMove the last move in the position
+         * @return {@code true} if {@code move} is legal, or {@code false} otherwise
          */
         public boolean isLegalMove(Move move, Move lastMove) {
             Cell start = move.getStart();
@@ -451,6 +429,7 @@ public class Board {
                 Piece targetPiece = get(target);
                 int targetCnt = movesMade(target);
                 Color color = getColor(start);
+                // Pretend we made the move and check whether our king becomes in check, then revert the move
                 move(start, target);
                 if (isKingInCheck(color)) {
                     verdict = false;
@@ -469,9 +448,8 @@ public class Board {
          * This one-parameter method is needed because {@code lastMove} is private, so this is the method expected to
          * be called from the outside.
          *
-         * @param move {@code Move}
-         * 
-         * @return {@code true} if {@code move} is legal, {@code false} otherwise
+         * @param move the move whose legality is to be checked
+         * @return {@code true} if {@code move} is legal, or {@code false} otherwise
          */
         public boolean isLegalMove(Move move) {
             return isLegalMove(move, lastMove);
@@ -499,10 +477,18 @@ public class Board {
 
     private final Position position;
 
+    /**
+     * Default constructor of {@code Board}
+     *
+     * @param position a {@code Position}
+     */
     public Board(Position position) {
         this.position = position;
     }
 
+    /**
+     * @return the position associated with this board
+     */
     public Position getPosition() {
         return position;
     }
@@ -511,8 +497,7 @@ public class Board {
      * Makes a move in the current position. If the move is invalid, leaves the position as is.
      *
      * @param move a {@code Move}
-     *
-     * @return {@code true} if {@code move} was valid, {@code false} otherwise
+     * @return {@code true} if {@code move} was valid, or {@code false} otherwise
      */
     public boolean makeMove(Move move) {
         if (position.isLegalMove(move)) {
@@ -527,7 +512,7 @@ public class Board {
                 int rookColumn = (category == MoveCategory.O_O ? SIZE - 1 : 0);
                 Cell rook = new Cell(king.getRow(), rookColumn);
                 int multiplier = category == MoveCategory.O_O ? 1 : -1;
-                position.shift(king, 0, CASTLING_DELTA * multiplier);
+                position.move(king, king.shift(0, CASTLING_DELTA * multiplier));
                 position.move(rook, king.shift(0, multiplier));
             }
             return true;

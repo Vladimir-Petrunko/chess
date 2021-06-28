@@ -4,32 +4,32 @@ import board.Color;
 
 public class FigurineFigureSet implements FigureSet {
     @Override
-    public char pawn(final Color color) {
+    public char pawn(Color color) {
         return color == Color.WHITE ? '♙' : '♟';
     }
 
     @Override
-    public char rook(final Color color) {
+    public char rook(Color color) {
         return color == Color.WHITE ? '♖' : '♜';
     }
 
     @Override
-    public char knight(final Color color) {
+    public char knight(Color color) {
         return color == Color.WHITE ? '♘' : '♞';
     }
 
     @Override
-    public char bishop(final Color color) {
+    public char bishop(Color color) {
         return color == Color.WHITE ? '♗' : '♝';
     }
 
     @Override
-    public char queen(final Color color) {
+    public char queen(Color color) {
         return color == Color.WHITE ? '♕' : '♛';
     }
 
     @Override
-    public char king(final Color color) {
+    public char king(Color color) {
         return color == Color.WHITE ? '♔' : '♚';
     }
 }

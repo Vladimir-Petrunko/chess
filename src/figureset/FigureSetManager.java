@@ -5,11 +5,19 @@ import pieces.*;
 public class FigureSetManager {
     private static FigureSet figureSet = new FigurineFigureSet();
 
-    public static void setFigureSet(final FigureSet set) {
+    /**
+     * Sets the active {@code FigureSet}.<br><br>
+     *
+     * A {@code FigureSet} is a group of rules mapping each piece to a character representation. Different figure sets
+     * denote different mappings. By default the {@code FigurineFigureSet} is used.
+     *
+     * @param set the {@code FigureSet} to be used
+     */
+    public static void setFigureSet(FigureSet set) {
         figureSet = set;
     }
 
-    public static char getSymbol(final Piece piece) {
+    public static char getSymbol(Piece piece) {
         if (piece instanceof Pawn) {
             return figureSet.pawn(piece.getColor());
         } else if (piece instanceof Rook) {
