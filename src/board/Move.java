@@ -167,9 +167,6 @@ public class Move {
                         case "B" -> category = MoveCategory.PROMOTE_TO_BISHOP;
                         default -> category = MoveCategory.PROMOTE_TO_KNIGHT; // case "N"
                     }
-                } else if (promoted == null && start.getCol() != target.getCol()) {
-                    // Capture was made to an empty cell => en passant
-                    category = MoveCategory.EN_PASSANT;
                 }
             }
         }

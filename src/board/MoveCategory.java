@@ -1,6 +1,8 @@
 package board;
 
 public enum MoveCategory {
+    // Should be self-explanatory enough
+    UNCATEGORIZED,
     ORDINARY,
     O_O,
     O_O_O,

@@ -26,9 +26,9 @@ public class Knight extends Piece {
     }
 
     @Override
-    public boolean validMoveDelta(final int dx, final int dy) {
-        return (Math.abs(dx) == 1 && Math.abs(dy) == 2) ||
-               (Math.abs(dx) == 2 && Math.abs(dy) == 1);
+    public boolean validMoveDelta(int dr, int dc) {
+        return (Math.abs(dr) == 1 && Math.abs(dc) == 2) ||
+               (Math.abs(dr) == 2 && Math.abs(dc) == 1);
     }
 
     @Override

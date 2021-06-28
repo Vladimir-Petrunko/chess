@@ -24,19 +24,23 @@ public class Board {
 
     public static class Position {
         private final Piece[][] grid = new Piece[SIZE][SIZE];
-        private final boolean[][] hasMoved = new boolean[SIZE][SIZE];
+        private final int[][] movesMade = new int[SIZE][SIZE];
         private final Cell[] kings = new Cell[2];
         private final List<Cell>[] pieces = new List[]{new ArrayList<>(), new ArrayList<>()};
         private final FreePathChecker checker = new FreePathChecker(SIZE);
         private Move lastMove = null;
 
         /**
-         * Private method that initializes all elements of the {@code hasMoved} array to {@code false}.
+         * Private method that initializes all elements of the {@code movesMade} array to {@code 0}.
          */
         private void initHasMoved() {
             for (int i = 0; i < SIZE; i++) {
-                Arrays.fill(hasMoved[i], false);
+                Arrays.fill(movesMade[i], 0);
             }
+        }
+
+        public Position() {
+            this("RNBQKBNR");
         }
 
         /**
@@ -56,8 +60,8 @@ public class Board {
             }
             // Pawns
             for (int i = 0; i < SIZE; i++) {
-                set(1, i, new Pawn(Color.BLACK));
-                set(SIZE - 2, i, new Pawn(Color.WHITE));
+                set(1, i, new Pawn(Color.BLACK), 0);
+                set(SIZE - 2, i, new Pawn(Color.WHITE), 0);
             }
             // Pieces
             for (int i = 0; i < SIZE; i++) {
@@ -66,8 +70,8 @@ public class Board {
                     Constructor<?> constructor = clazz.getConstructor(Color.class);
                     Piece white = (Piece) constructor.newInstance(Color.WHITE);
                     Piece black = (Piece) constructor.newInstance(Color.BLACK);
-                    set(0, i, black);
-                    set(SIZE - 1, i, white);
+                    set(0, i, black, 0);
+                    set(SIZE - 1, i, white, 0);
                 } catch (Exception ignored) {
                     // Everything okay, program should not enter this block
                 }
@@ -83,7 +87,7 @@ public class Board {
         public Position(Piece[][] grid) {
             for (int i = 0; i < SIZE; i++) {
                 for (int j = 0; j < SIZE; j++) {
-                    set(i, j, grid[i][j]);
+                    set(i, j, grid[i][j], 0);
                 }
             }
             initHasMoved();
@@ -129,30 +133,6 @@ public class Board {
         }
 
         /**
-         * Returns the leftmost column index, from the point of view of a particular color. (By default, the orientation
-         * is standard: black pieces above, white pieces below).
-         *
-         * @param color a {@code color}
-         *
-         * @return the leftmost column index, from the point of view of {@code color}
-         */
-        public int getLeftmostColumn(Color color) {
-            return color == Color.WHITE ? 0 : SIZE - 1;
-        }
-
-        /**
-         * Returns the rightmost column index, from the point of view of a particular color. (By default, the orientation
-         * is standard: black pieces above, white pieces below).
-         *
-         * @param color a {@code color}
-         *
-         * @return the rightmost column index, from the point of view of {@code color}
-         */
-        public int getRightmostColumn(Color color) {
-            return color == Color.WHITE ? SIZE - 1 : 0;
-        }
-
-        /**
          * Private method that sets the contents of the given cell to a particular piece.<br><br>
          *
          * The method is private to enable encapsulation: it is impossible to directly alter the contents of a position
@@ -160,11 +140,12 @@ public class Board {
          *
          * @param cell a {@code Cell}
          * @param piece a {@code Piece}
+         * @param pieceMoveCount the number of moves made by {@code piece} before
          *
-         * @see #set(int, int, Piece) set(int, int, Piece)
+         * @see #set(int, int, Piece, int) set(int, int, Piece, int)
          */
-        private void set(Cell cell, Piece piece) {
-            set(cell.getRow(), cell.getCol(), piece);
+        private void set(Cell cell, Piece piece, int pieceMoveCount) {
+            set(cell.getRow(), cell.getCol(), piece, pieceMoveCount);
         }
 
         /**
@@ -176,24 +157,87 @@ public class Board {
          * @param row the row index of the cell
          * @param col the column index of the cell
          * @param piece a {@code Piece}
+         * @param pieceMoveCount the number of moves made by {@code piece} before
          *
-         * @see #set(Cell, Piece) set(Cell, Piece)
+         * @see #set(Cell, Piece, int) set(Cell, Piece, int)
          */
-        private void set(int row, int col, Piece piece) {
-            grid[row][col] = piece;
+        private void set(int row, int col, Piece piece, int pieceMoveCount) {
             if (piece == null) {
-                checker.remove(row, col);
-                hasMoved[row][col] = false;
-            } else {
-                checker.set(row, col);
-                hasMoved[row][col] = true;
-                Cell cell = new Cell(row, col);
-                int index = piece.getColor() == Color.WHITE ? 0 : 1;
-                pieces[index].add(cell);
-                if (piece instanceof King) {
-                    kings[index] = cell;
-                }
+                clear(row, col);
+                return;
             }
+            grid[row][col] = piece;
+            checker.set(row, col);
+            movesMade[row][col] = pieceMoveCount + 1;
+            Cell cell = new Cell(row, col);
+            int index = piece.getColor() == Color.WHITE ? 0 : 1;
+            pieces[index].add(cell);
+            if (piece instanceof King) {
+                kings[index] = cell;
+            }
+        }
+
+        /**
+         * Private method that clears the contents of a given cell.
+         *
+         * @param row the row index of the cell
+         * @param col the column index of the cell
+         */
+        private void clear(int row, int col) {
+            grid[row][col] = null;
+            checker.remove(row, col);
+            movesMade[row][col] = 0;
+        }
+
+        /**
+         * Private method that clears the contents of a given cell.
+         *
+         * @param cell a {@code Cell}
+         */
+        private void clear(Cell cell) {
+            clear(cell.getRow(), cell.getCol());
+        }
+
+        /**
+         * Private method that moves the piece from a source cell to a target cell.<br><br>
+         *
+         * This method should be only called when the source cell contains a piece.
+         *
+         * @param start a {@code Cell}
+         * @param target a {@code Cell}
+         *
+         * @see #unmove(Cell, Cell) unmove(Cell, Cell)
+         */
+        private void move(Cell start, Cell target) {
+            int cnt = movesMade(start);
+            Piece piece = get(start);
+            clear(start);
+            set(target, piece, cnt);
+        }
+
+        /**
+         * Private method that cancels a move from a source cell to a target cell.<br><br>
+         *
+         * @param start a {@code Cell}
+         * @param target a {@code Cell}
+         */
+        private void unmove(Cell start, Cell target) {
+            int cnt = movesMade(target);
+            Piece piece = get(target);
+            clear(target);
+            set(start, piece, cnt - 2);
+        }
+
+        /**
+         * Private method that shifts the piece located in a particular cell. Helps avoid code duplication when handling
+         * castling.
+         *
+         * @param cell a {@code Cell}
+         * @param dr the row displacement
+         * @param dc the column displacement
+         */
+        private void shift(Cell cell, int dr, int dc) {
+            move(cell, cell.shift(dr, dc));
         }
 
         /**
@@ -219,7 +263,18 @@ public class Board {
          * @return {@code true} if the piece located at {@code cell} has moved before, {@code false} otherwise
          */
         public boolean hasMoved(Cell cell) {
-            return hasMoved[cell.getRow()][cell.getCol()];
+            return movesMade[cell.getRow()][cell.getCol()] > 0;
+        }
+
+        /**
+         * Determines the number of moves made by a piece located at the given cell.
+         *
+         * @param cell a {@code Cell}
+         *
+         * @return the number of moves made by the piece located at {@code cell}
+         */
+        public int movesMade(Cell cell) {
+            return movesMade[cell.getRow()][cell.getCol()];
         }
 
         /**
@@ -284,7 +339,7 @@ public class Board {
             int r = Math.max(first.getCol(), second.getCol());
             int row = first.getRow();
             for (int col = l; col <= r; col++) {
-                if (isAttacked(new Cell(row, col), color)) {
+                if (isAttacked(new Cell(row, col), Color.getOppositeColor(color))) {
                     return false;
                 }
             }
@@ -351,6 +406,17 @@ public class Board {
         }
 
         /**
+         * Determines whether the king of a particular color is in check (i.e. is attacked).
+         *
+         * @param color a {@code Color}
+         *
+         * @return {@code true} if the king of color {@code Color} is attacked, {@code false} otherwise
+         */
+        public boolean isKingInCheck(Color color) {
+            return isAttacked(getKingCell(color), Color.getOppositeColor(color));
+        }
+
+        /**
          * Determines whether a move is legal. Also takes as parameter the last move in order to check the legality of
          * a possible en passant capture.
          *
@@ -365,23 +431,36 @@ public class Board {
             Piece piece = get(start);
             int dr = target.getRow() - start.getRow();
             int dc = target.getCol() - start.getCol();
+            boolean verdict;
             if (piece == null || (!piece.canJump() && !isFreePathBetween(start, target))) {
                 // Either start cell is empty or path to destination cell is blocked (and piece cannot jump)
-                return false;
-            }
-            List<Move> additionalMoves = piece.getAdditionalLegalMoves(start, this, lastMove);
-            if (additionalMoves.contains(move)) {
-                return true;
-            }
-            if (isOccupied(target)) {
-                // Check for valid capture
-                Color thisColor = piece.getColor();
-                Color thatColor = get(target).getColor();
-                return thisColor != thatColor && piece.validCaptureDelta(dr, dc);
+                verdict = false;
             } else {
-                // Check for valid non-capture
-                return piece.validMoveDelta(dr, dc);
+                List<Move> additionalMoves = piece.getAdditionalLegalMoves(start, this, lastMove);
+                if (additionalMoves.contains(move)) {
+                    verdict = true;
+                } else if (isOccupied(target)) {
+                    // Check for valid capture
+                    verdict = canOccupy(piece, target) && piece.validCaptureDelta(dr, dc);
+                } else {
+                    // Check for valid non-capture
+                    verdict = piece.validMoveDelta(dr, dc);
+                }
             }
+            if (verdict) {
+                Piece targetPiece = get(target);
+                int targetCnt = movesMade(target);
+                Color color = getColor(start);
+                move(start, target);
+                if (isKingInCheck(color)) {
+                    verdict = false;
+                }
+                unmove(start, target);
+                if (targetPiece != null) {
+                    set(target, targetPiece, targetCnt - 1);
+                }
+            }
+            return verdict;
         }
 
         /**
@@ -429,21 +508,6 @@ public class Board {
     }
 
     /**
-     * Private method that shifts the piece located in a particular cell. Helps avoid code duplication when handling
-     * castling.
-     *
-     * @param cell a {@code Cell}
-     * @param dr the row displacement
-     * @param dc the column displacement
-     */
-    private void shift(Cell cell, int dr, int dc) {
-        Piece piece = position.get(cell);
-        Cell target = cell.shift(dr, dc);
-        position.set(cell, null);
-        position.set(target, piece);
-    }
-
-    /**
      * Makes a move in the current position. If the move is invalid, leaves the position as is.
      *
      * @param move a {@code Move}
@@ -456,16 +520,15 @@ public class Board {
             if (category == MoveCategory.ORDINARY) {
                 Cell start = move.getStart();
                 Cell target = move.getTarget();
-                Piece piece = position.get(start);
-                position.set(start, null);
-                position.set(target, piece);
+                position.move(start, target);
                 position.lastMove = move;
             } else if (category == MoveCategory.O_O || category == MoveCategory.O_O_O) {
                 Cell king = move.getStart();
-                Cell rook = move.getTarget();
+                int rookColumn = (category == MoveCategory.O_O ? SIZE - 1 : 0);
+                Cell rook = new Cell(king.getRow(), rookColumn);
                 int multiplier = category == MoveCategory.O_O ? 1 : -1;
-                shift(king, 0, CASTLING_DELTA * multiplier);
-                shift(rook, 0, (rook.getCol() - king.getCol() - CASTLING_DELTA + 1) * -multiplier);
+                position.shift(king, 0, CASTLING_DELTA * multiplier);
+                position.move(rook, king.shift(0, multiplier));
             }
             return true;
         }

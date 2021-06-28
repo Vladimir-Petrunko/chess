@@ -24,8 +24,8 @@ public class Queen extends Piece {
     }
 
     @Override
-    public boolean validMoveDelta(final int dr, final int dc) {
-        return Math.abs(dr) == Math.abs(dr) || dc == 0 || dc == 0;
+    public boolean validMoveDelta(int dr, int dc) {
+        return Math.abs(dr) == Math.abs(dc) || dc == 0 || dr == 0;
     }
 
     @Override

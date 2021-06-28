@@ -68,15 +68,15 @@ public class Cell {
     }
 
     /**
-     * Determines whether this cell is adjacent to another cell passed as a parameter.
+     * Determines whether this cell is beside (i.e. to the left or right) another cell passed as a parameter.
      *
      * @param other a {@code Cell}
-     * @return {@code true} if this cell is adjacent to {@code other}, {@code false} otherwise
+     * @return {@code true} if this cell is beside {@code other}, {@code false} otherwise
      */
-    public boolean isAdjacentTo(Cell other) {
+    public boolean isBeside(Cell other) {
         int dr = other.getRow() - getRow();
         int dc = other.getCol() - getCol();
-        return dr * dr + dc * dc == 1;
+        return dr == 0 && Math.abs(dc) == 1;
     }
 
     /**

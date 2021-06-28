@@ -22,7 +22,7 @@ public class Rook extends Piece {
     }
 
     @Override
-    public boolean validMoveDelta(final int dr, final int dc) {
+    public boolean validMoveDelta(int dr, int dc) {
         return dr == 0 || dc == 0;
     }
 

@@ -10,6 +10,9 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
 
+import static utils.Global.CASTLING_DELTA;
+import static utils.Global.SIZE;
+
 public class HumanPlayer implements Player {
     private final String nickname;
     private final Scanner in;
@@ -52,22 +55,26 @@ public class HumanPlayer implements Player {
             if (str.equals("0-0") || str.equals("0-0-0")) {
                 Cell kingCell = position.getKingCell(color);
                 Piece king = position.get(kingCell);
-                int column = str.equals("0-0") ? position.getRightmostColumn(color) : position.getLeftmostColumn(color);
-                Cell rookCell = new Cell(kingCell.getRow(), column);
-                move = new Move(kingCell, rookCell, king);
+                int delta = str.equals("0-0") ? CASTLING_DELTA : -CASTLING_DELTA;
+                Cell landingCell = kingCell.shift(0, delta);
+                move = new Move(kingCell, landingCell, king);
             } else if (str.length() != 5 || str.charAt(2) != '-') {
                 out.println("Unable to parse move " + str + ".");
+                continue;
             } else {
                 try {
                     Cell initial = new Cell(str.substring(0, 2));
                     Cell target = new Cell(str.substring(3, 5));
-                    move = new Move(initial, target, position.get(initial));
-                    if (!position.isLegalMove(move) || position.getColor(initial) != color) {
-                        move = null;
-                    }
+                    Piece piece = position.get(initial);
+                    move = new Move(initial, target, piece);
                 } catch (IllegalArgumentException ex) {
                     out.println(ex.getMessage());
                 }
+            }
+            if (move == null || !position.isLegalMove(move) || position.getColor(move.getStart()) != color) {
+                String moveString = ((move == null || move.getPiece() == null) ? ("?" + str) : move.toString());
+                out.println("Sorry, the move " + moveString + " is not a legal move in the current position.");
+                move = null;
             }
         }
         return move;

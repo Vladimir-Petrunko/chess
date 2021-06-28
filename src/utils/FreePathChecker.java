@@ -18,7 +18,7 @@ public class FreePathChecker {
         update();
     }
 
-    // TODO: optimize to O(n), currently O(n^3) brute force
+    // TODO: optimize to O(n) if possible, currently O(n^3) brute force
     private void update() {
         for (int id = 0; id < 4; id++) {
             for (int i = 0; i < n; i++) {
@@ -72,21 +72,21 @@ public class FreePathChecker {
             // Same row
             Cell init = start.getCol() < target.getCol() ? start : target;
             int count = steps[RIGHT][init.getRow()][init.getCol()];
-            return count >= Math.abs(start.getRow() - target.getRow()) - 1;
+            return count >= Math.abs(start.getCol() - target.getCol()) - 1;
         } else if (start.getCol() == target.getCol()) {
             // Same column
             Cell init = start.getRow() < target.getRow() ? start : target;
             int count = steps[DOWN][init.getRow()][init.getCol()];
-            return count >= Math.abs(start.getCol() - target.getCol()) - 1;
-        } else if (start.getRow() + start.getCol() == target.getRow() + target.getCol()) {
-            // Parallel to main diagonal
-            Cell init = start.getRow() < target.getRow() ? start : target;
-            int count = steps[RIGHT_DOWN][init.getRow()][init.getCol()];
             return count >= Math.abs(start.getRow() - target.getRow()) - 1;
-        } else if (start.getRow() - start.getCol() == target.getRow() + target.getCol()) {
+        } else if (start.getRow() + start.getCol() == target.getRow() + target.getCol()) {
             // Parallel to side diagonal
             Cell init = start.getRow() < target.getRow() ? start : target;
             int count = steps[LEFT_DOWN][init.getRow()][init.getCol()];
+            return count >= Math.abs(start.getRow() - target.getRow()) - 1;
+        } else if (start.getRow() - start.getCol() == target.getRow() - target.getCol()) {
+            // Parallel to main diagonal
+            Cell init = start.getRow() < target.getRow() ? start : target;
+            int count = steps[RIGHT_DOWN][init.getRow()][init.getCol()];
             return count >= Math.abs(start.getRow() - target.getRow()) - 1;
         } else {
             return true;

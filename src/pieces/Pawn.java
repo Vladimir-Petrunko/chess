@@ -60,10 +60,10 @@ public class Pawn extends Piece {
     private List<Move> checkPromotion(boolean condition, Cell initial, Cell target) {
         if (condition) {
             return List.of(
-                new Move(initial, target, null, MoveCategory.PROMOTE_TO_QUEEN),
-                new Move(initial, target, null, MoveCategory.PROMOTE_TO_ROOK),
-                new Move(initial, target, null, MoveCategory.PROMOTE_TO_BISHOP),
-                new Move(initial, target, null, MoveCategory.PROMOTE_TO_KNIGHT)
+                new Move(initial, target, this, MoveCategory.PROMOTE_TO_QUEEN),
+                new Move(initial, target, this, MoveCategory.PROMOTE_TO_ROOK),
+                new Move(initial, target, this, MoveCategory.PROMOTE_TO_BISHOP),
+                new Move(initial, target, this, MoveCategory.PROMOTE_TO_KNIGHT)
             );
         } else {
             return new ArrayList<>();
@@ -103,11 +103,10 @@ public class Pawn extends Piece {
         Cell lastStart = lastMove.getStart();
         Cell lastTarget = lastMove.getTarget();
         int dr = lastTarget.getRow() - lastStart.getRow();
-        int dc = lastTarget.getCol() - lastStart.getCol();
-        if (position.adjacent(initial, lastTarget) && Math.abs(dr) == 2 && dc == 0) {
+        if (initial.isBeside(lastTarget) && lastMove.getPiece() instanceof Pawn && Math.abs(dr) == 2) {
             int offset = lastStart.getCol() - initial.getCol();
             Cell landingCell = initial.shift(dir, offset);
-            list.add(new Move(initial, landingCell, position.get(initial)));
+            list.add(new Move(initial, landingCell, this));
         }
         return list;
     }

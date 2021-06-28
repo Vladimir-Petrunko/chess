@@ -110,12 +110,9 @@ public abstract class Piece {
         for (Pair delta : deltas) {
             // For each shift, check whether it is legal in the current position
             Cell shifted = initial.shift(delta.first(), delta.second());
-            boolean legal = shifted.withinBounds() && position.canOccupy(this, shifted);
-            if (!canJump()) {
-                legal &= position.isFreePathBetween(initial, shifted);
-            }
-            if (legal) {
-                moves.add(new Move(initial, shifted, position.get(initial)));
+            Move move = new Move(initial, shifted, this);
+            if (position.isLegalMove(move)) {
+                moves.add(move);
             }
         }
         return moves;
@@ -125,7 +122,7 @@ public abstract class Piece {
      * Returns a list of additional legal moves of this chess piece on a given {@code Position}. Specifically, the
      * following types of moves <b>are considered</b>:
      * <ul>
-     *      <li>"En passant" pawn captures,</li>
+     *      <li>En passant pawn captures,</li>
      *      <li>Pawn promotions,</li>
      *      <li>Castling</li>
      * </ul>

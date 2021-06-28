@@ -9,8 +9,8 @@ import board.Move;
 import board.MoveCategory;
 import utils.Pair;
 
-import static utils.Global.SIZE;
 import static utils.Global.CASTLING_DELTA;
+import static utils.Global.SIZE;
 
 public class King extends Piece {
     private static final List<Pair> deltas = new ArrayList<Pair>();
@@ -25,7 +25,7 @@ public class King extends Piece {
         }
     }
 
-    public King(final Color color) {
+    public King(Color color) {
         super(color);
     }
 
@@ -35,38 +35,49 @@ public class King extends Piece {
     }
 
     @Override
-    public boolean validMoveDelta(final int dr, final int dc) {
+    public boolean validMoveDelta(int dr, int dc) {
         return Math.abs(dr) <= 1 && Math.abs(dc) <= 1 && !(dr == 0 && dc == 0);
     }
 
-    private Move checkCastling(final Position position, final Cell kingCell, final Cell rookCell, final MoveCategory category) {
-        if (position.hasMoved(kingCell) || position.hasMoved(rookCell) || !position.isHorizontalRangeUnattacked(kingCell, rookCell)) {
-            return null;
-        }
+    /**
+     * Private method that checks a potential castling move for legality. If castling is legal, generates and returns
+     * the corresponding move.<br><br>
+     *
+     * The parameter {@code kingCell} (and also {@code rookCell}) is unnecessary, since {@code Position} has the method
+     * {@link board.Board.Position#getKingCell(Color) Position.getKingCell(Color)}, however
+     *
+     * @param position a {@code Position}
+     * @param kingCell the current cell of this king in {@code position}
+     * @param rookCell the current cell of one of the rooks in {@code position}
+     * @param category the type of castling, either {@code MoveCategory.O_O} or {@code MoveCategory.O_O_O}
+     *
+     * @return a castling {@code Move} if such a move is legal, otherwise {@code null}
+     */
+    private Move checkCastling(Position position, Cell kingCell, Cell rookCell, MoveCategory category) {
+        Color color = position.get(kingCell).getColor();
         int delta = (category == MoveCategory.O_O ? CASTLING_DELTA : -CASTLING_DELTA);
+        // TODO: may not work with Fischer random chess, depending on the initial board layout
         Cell landingCell = kingCell.shift(0, delta);
-        if (position.isOccupied(landingCell)) {
+        if (!position.hasMoved(kingCell) &&
+            !position.isKingInCheck(color) &&
+            !position.hasMoved(rookCell) &&
+            position.isHorizontalRangeUnattacked(kingCell, landingCell, color)) {
+            // All necessary conditions for castling are satisfied
+            return new Move(kingCell, landingCell, this);
+        } else {
+            // This castling move is illegal
             return null;
         }
-        return new Move(kingCell, rookCell, category);
     }
 
     @Override
-    public ArrayList<Move> getAdditionalLegalMoves(final Cell initial, final Position position, final Move lastMove) {
-        Cell kingCell = position.getKingCell(color);
-        if (position.hasMoved(kingCell)) {
-            return new ArrayList<>();
-        } else {
-            ArrayList<Move> list = new ArrayList<>();
-            Move kingside = checkCastling(position, kingCell, new Cell(kingCell.getRow(), 0), MoveCategory.O_O);
-            Move queenside = checkCastling(position, kingCell, new Cell(kingCell.getRow(), SIZE - 1), MoveCategory.O_O_O);
-            if (kingside != null) {
-                list.add(kingside);
-            }
-            if (queenside != null) {
-                list.add(queenside);
-            }
-            return list;
-        }
+    public ArrayList<Move> getAdditionalLegalMoves(Cell initial, Position position, Move lastMove) {
+        ArrayList<Move> list = new ArrayList<>();
+        int row = initial.getRow();
+        Move kingside = checkCastling(position, initial, new Cell(row, SIZE - 1), MoveCategory.O_O);
+        Move queenside = checkCastling(position, initial, new Cell(row, 0), MoveCategory.O_O_O);
+        if (kingside != null) list.add(kingside);
+        if (queenside != null) list.add(queenside);
+        return list;
     }
 }

@@ -13,4 +13,9 @@ public class Pair {
     public int second() {
         return second;
     }
+
+    @Override
+    public String toString() {
+        return "(" + first + ", " + second + ")";
+    }
 }
