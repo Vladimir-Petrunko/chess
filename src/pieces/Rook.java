@@ -1,14 +1,13 @@
 package pieces;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.HashSet;
 import board.Color;
 import utils.Pair;
 
 import static utils.Global.SIZE;
 
 public class Rook extends Piece {
-    private static final List<Pair> deltas = new ArrayList<Pair>();
+    private static final HashSet<Pair> deltas = new HashSet<Pair>();
 
     static {
         for (int delta = -SIZE + 1; delta <= SIZE - 1; delta++) {
@@ -27,7 +26,7 @@ public class Rook extends Piece {
     }
 
     @Override
-    public List<Pair> getBasicDeltas() {
+    public HashSet<Pair> getBasicDeltas() {
         return deltas;
     }
 }

@@ -1,12 +1,18 @@
 package board;
 
+import pieces.Pawn;
 import player.Player;
+import board.Board.Position;
 import utils.Status;
 
 public class Game {
     private final Board board;
     private final Player white, black;
     private Color currentTurn = Color.WHITE;
+    private Status gameResult = Status.UNFINISHED;
+    private StringBuilder notation = new StringBuilder();
+    private int moveNumber = 1;
+    private int halfMovesUntilDraw = 100;
 
     /**
      * Default constructor of {@code Game} from two players and a default chessboard.
@@ -39,12 +45,42 @@ public class Game {
     private Status makeMove() {
         Player current = (currentTurn == Color.WHITE ? white : black);
         Move move = current.makeMove(board.getPosition(), currentTurn);
+        if (move.isCapture(board.getPosition()) || move.getPiece() instanceof Pawn) {
+            halfMovesUntilDraw = 100;
+        } else {
+            halfMovesUntilDraw--;
+        }
+        String str = move.toString();
+        while (str.length() < 10) {
+            str += ' ';
+        }
+        if (currentTurn == Color.WHITE) {
+            if (moveNumber != 0) notation.append('\n');
+            notation.append(moveNumber).append('.');
+            if (moveNumber < 10) {
+                notation.append("     ");
+            } else if (moveNumber < 100) {
+                notation.append("    ");
+            } else {
+                notation.append("   ");
+            }
+            notation.append(str);
+        } else {
+            notation.append("\t\t").append(str);
+        }
         boolean result = board.makeMove(move);
         // If move is legal, continue the game. Otherwise - automatic forfeit (since it is the Player's responsibility
         // to provide legal moves; he has all the necessary information
         if (result) {
             currentTurn = Color.getOppositeColor(currentTurn);
-            return Status.UNFINISHED;
+            Position position = board.getPosition();
+            if (position.isKingInCheckmate(currentTurn)) {
+                return currentTurn == Color.WHITE ? Status.BLACK_WON : Status.WHITE_WON;
+            } else if (position.isStalemate(currentTurn) || halfMovesUntilDraw <= 0) {
+                return Status.DRAW;
+            } else {
+                return Status.UNFINISHED;
+            }
         } else if (currentTurn == Color.WHITE) {
             return Status.BLACK_WON;
         } else {
@@ -61,27 +97,47 @@ public class Game {
         Status result = makeMove();
         if (result == Status.UNFINISHED) {
             // Game not decided, we can make the next half-move
-            return makeMove();
-        } else {
-            return result;
+            result = makeMove();
+            moveNumber++;
         }
+        return result;
     }
 
     /**
      * Plays the game from the beginning up to the end and returns the result.<br><br>
      *
      * This method is supposed to be called only once for a single instance of {@code Board}. It starts the game and
-     * loops repeatedly until one of the players wins or a draw is reached.
+     * loops repeatedly until one of the players wins or a draw is reached. If this method is called more than once,
+     * all subsequent calls return the result of the first call.
      *
      * @return the status of the game after the end
      */
     public Status play() {
+        if (gameResult != Status.UNFINISHED) {
+            return gameResult;
+        }
         while (true) {
             Status result = nextTurn();
             if (result != Status.UNFINISHED) {
-                return result;
+                gameResult = result;
+                if (gameResult == Status.BLACK_WON) {
+                    notation.append('\n').append("0-1");
+                } else if (gameResult == Status.WHITE_WON) {
+                    notation.append('\n').append("1-0");
+                } else {
+                    notation.append('\n').append("½-½");
+                }
+                return gameResult;
             }
         }
+    }
+
+    public String getGameNotation() {
+        return notation.toString();
+    }
+
+    public Position getFinalPosition() {
+        return board.getPosition();
     }
 
 }

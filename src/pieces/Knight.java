@@ -1,20 +1,22 @@
 package pieces;
 
-import java.util.List;
+import java.util.HashSet;
 import board.Color;
 import utils.Pair;
 
 public class Knight extends Piece {
-    private static final List<Pair> deltas = List.of(
-        new Pair(1, 2),
-        new Pair(1, -2),
-        new Pair(-1, 2),
-        new Pair(-1, -2),
-        new Pair(2, 1),
-        new Pair(2, -1),
-        new Pair(-2, 1),
-        new Pair(-2, -1)
-    );
+    private static final HashSet<Pair> deltas = new HashSet<>();
+
+    static {
+        deltas.add(new Pair(1, 2));
+        deltas.add(new Pair(1, -2));
+        deltas.add(new Pair(-1, 2));
+        deltas.add(new Pair(-1, -2));
+        deltas.add(new Pair(2, 1));
+        deltas.add(new Pair(2, -1));
+        deltas.add(new Pair(-2, 1));
+        deltas.add(new Pair(-2, -1));
+    }
 
     public Knight(Color color) {
         super(color);
@@ -32,7 +34,7 @@ public class Knight extends Piece {
     }
 
     @Override
-    public List<Pair> getBasicDeltas() {
+    public HashSet<Pair> getBasicDeltas() {
         return deltas;
     }
 }

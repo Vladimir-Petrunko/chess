@@ -1,7 +1,6 @@
 package pieces;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.HashSet;
 import board.Board.Position;
 import board.Color;
 import board.Cell;
@@ -13,7 +12,7 @@ import static utils.Global.CASTLING_DELTA;
 import static utils.Global.SIZE;
 
 public class King extends Piece {
-    private static final List<Pair> deltas = new ArrayList<Pair>();
+    private static final HashSet<Pair> deltas = new HashSet<Pair>();
 
     static {
         for (int dr = -1; dr <= 1; dr++) {
@@ -30,7 +29,7 @@ public class King extends Piece {
     }
 
     @Override
-    public List<Pair> getBasicDeltas() {
+    public HashSet<Pair> getBasicDeltas() {
         return deltas;
     }
 
@@ -71,8 +70,8 @@ public class King extends Piece {
     }
 
     @Override
-    public ArrayList<Move> getAdditionalLegalMoves(Cell initial, Position position, Move lastMove) {
-        ArrayList<Move> list = new ArrayList<>();
+    public HashSet<Move> getAdditionalLegalMoves(Cell initial, Position position, Move lastMove) {
+        HashSet<Move> list = new HashSet<>();
         int row = initial.getRow();
         Move kingside = checkCastling(position, initial, new Cell(row, SIZE - 1), MoveCategory.O_O);
         Move queenside = checkCastling(position, initial, new Cell(row, 0), MoveCategory.O_O_O);

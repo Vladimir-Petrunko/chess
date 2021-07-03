@@ -1,7 +1,6 @@
 package pieces;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.HashSet;
 
 import board.Board.Position;
 import board.Cell;
@@ -85,7 +84,7 @@ public abstract class Piece {
      *
      * @return a list of valid shifts of a piece of this type.
      */
-    public abstract List<Pair> getBasicDeltas();
+    public abstract HashSet<Pair> getBasicDeltas();
 
     /**
      * Returns a list of ordinary legal moves of this chess piece on a given {@code Position}. Specifically, the
@@ -104,12 +103,15 @@ public abstract class Piece {
      *
      * @see #getAdditionalLegalMoves(Cell, Position, Move) getAdditionalLegalMoves(Cell, Position, Move)
      */
-    public List<Move> getBasicLegalMoves(Cell initial, Position position) {
-        List<Move> moves = new ArrayList<>();
-        List<Pair> deltas = getBasicDeltas();
+    public HashSet<Move> getBasicLegalMoves(Cell initial, Position position) {
+        HashSet<Move> moves = new HashSet<>();
+        HashSet<Pair> deltas = getBasicDeltas();
         for (Pair delta : deltas) {
             // For each shift, check whether it is legal in the current position
             Cell shifted = initial.shift(delta.first(), delta.second());
+            if (this instanceof Pawn && initial.getRow() == position.getRowBeforePromotion(color)) {
+                continue;
+            }
             Move move = new Move(initial, shifted, this);
             if (position.isLegalMove(move)) {
                 moves.add(move);
@@ -141,8 +143,8 @@ public abstract class Piece {
      *
      * @see #getBasicLegalMoves(Cell, Position) getBasicLegalMoves(Cell, Position)
      */
-    public List<Move> getAdditionalLegalMoves(Cell initial, Position position, Move lastMove) {
-        return new ArrayList<>();
+    public HashSet<Move> getAdditionalLegalMoves(Cell initial, Position position, Move lastMove) {
+        return new HashSet<>();
     }
 
     /**
@@ -159,10 +161,10 @@ public abstract class Piece {
      * @see #getAdditionalLegalMoves(Cell, Position, Move) getAdditionalLegalMoves(Cell, Position, Move)
      * @see #getBasicLegalMoves(Cell, Position) <br>getBasicLegalMoves(Cell, Position)
      */
-    public List<Move> getLegalMoves(Cell initial, Position position, Move lastMove) {
-        List<Move> basic = getBasicLegalMoves(initial, position);
-        List<Move> moves = new ArrayList<>(basic);
-        List<Move> additional = getAdditionalLegalMoves(initial, position, lastMove);
+    public HashSet<Move> getLegalMoves(Cell initial, Position position, Move lastMove) {
+        HashSet<Move> basic = getBasicLegalMoves(initial, position);
+        HashSet<Move> moves = new HashSet<>(basic);
+        HashSet<Move> additional = getAdditionalLegalMoves(initial, position, lastMove);
         moves.addAll(additional);
         return moves;
     }

@@ -22,7 +22,6 @@ public class Board {
         private final Piece[][] grid = new Piece[SIZE][SIZE];
         private final int[][] movesMade = new int[SIZE][SIZE];
         private final Cell[] kings = new Cell[2];
-        private final HashSet<Cell>[] pieces = new HashSet[]{new HashSet<>(), new HashSet<>()};
         private final FreePathChecker checker = new FreePathChecker(SIZE);
         private Move lastMove = null;
 
@@ -64,8 +63,8 @@ public class Board {
             }
             // Pawns
             for (int i = 0; i < SIZE; i++) {
-                set(1, i, new Pawn(Color.BLACK), 0);
-                set(SIZE - 2, i, new Pawn(Color.WHITE), 0);
+                set(new Cell(1, i), new Pawn(Color.BLACK), 0);
+                set(new Cell(SIZE - 2, i), new Pawn(Color.WHITE), 0);
             }
             // Pieces
             for (int i = 0; i < SIZE; i++) {
@@ -74,8 +73,8 @@ public class Board {
                     Constructor<?> constructor = clazz.getConstructor(Color.class);
                     Piece white = (Piece) constructor.newInstance(Color.WHITE);
                     Piece black = (Piece) constructor.newInstance(Color.BLACK);
-                    set(0, i, black, 0);
-                    set(SIZE - 1, i, white, 0);
+                    set(new Cell(0, i), black, 0);
+                    set(new Cell(SIZE - 1, i), white, 0);
                 } catch (Exception ignored) {
                     // Everything okay, program should not enter this block
                 }
@@ -91,33 +90,58 @@ public class Board {
         public Position(Piece[][] grid) {
             for (int i = 0; i < SIZE; i++) {
                 for (int j = 0; j < SIZE; j++) {
-                    set(i, j, grid[i][j], 0);
+                    set(new Cell(i, j), grid[i][j], 0);
                 }
             }
             initHasMoved(); // because we touched elements of hasMoved
         }
 
         /**
-         * Returns the piece located at the given cell.
+         * Gets the last move made in this position.
          *
-         * @param cell a {@code Cell}
-         * @return the piece located at {@code cell}
-         * @see #get(int, int)
+         * @return the last move made in this position
          */
-        public Piece get(Cell cell) {
-            return get(cell.getRow(), cell.getCol());
+        public Move getLastMove() {
+            return lastMove;
+        }
+
+        // TODO: avoid looping of whole board every time (beware of ConcurrentModificationException when updating info dynamically)
+        /**
+         * Returns the list of pieces of a given color
+         *
+         * @param color a {@code Color}
+         * @return the list of all pieces of color {@code color}
+         */
+        public HashSet<Cell> getPieceList(Color color) {
+            HashSet<Cell> pieces = new HashSet<>();
+            for (int i = 0; i < SIZE; i++) {
+                for (int j = 0; j < SIZE; j++) {
+                    Cell cell = new Cell(i, j);
+                    Piece piece = get(cell);
+                    if (piece != null && piece.getColor() == color) {
+                        pieces.add(cell);
+                    }
+                }
+            }
+            return pieces;
+        }
+
+        public int getPromotionRow(Color color) {
+            return color == Color.WHITE ? 0 : SIZE - 1;
+        }
+
+        public int getRowBeforePromotion(Color color) {
+            return color == Color.WHITE ? 1 : SIZE - 2;
         }
 
         /**
          * Returns the piece located at the given cell.
          *
-         * @param row the row index of the cell
-         * @param col the column index of the cell
-         * @return the piece located at {@code (row, col)}
-         * @see #get(Cell)
+         * @param cell a {@code Cell}
+         * @return the piece located at {@code cell}, or {@code null} if there is no piece in {@code cell}
          */
-        public Piece get(int row, int col) {
-            return grid[row][col];
+        public Piece get(Cell cell) {
+            return grid[cell.getRow()][cell.getCol()];
         }
 
         /**
@@ -134,41 +158,24 @@ public class Board {
         /**
          * Private method that sets the contents of the given cell to a particular piece.<br><br>
          *
-         * This method is private to enable encapsulation: it is impossible to directly alter the contents of a position
-         * from outside, as {@code Position} is an inner class of {@code Board}.
+         * This method is private in order to enable encapsulation: it is impossible to directly alter the contents of a
+         * position from outside, as {@code Position} is an inner class of {@code Board}.
          *
          * @param cell a {@code Cell}
          * @param piece a {@code Piece}
          * @param pieceMoveCount the number of moves made by {@code piece} before
-         * @see #set(int, int, Piece, int)
          */
         private void set(Cell cell, Piece piece, int pieceMoveCount) {
-            set(cell.getRow(), cell.getCol(), piece, pieceMoveCount);
-        }
-
-        /**
-         * Private method that sets the contents of the given cell to a particular piece.<br><br>
-         *
-         * This method is private to enable encapsulation: it is impossible to directly alter the contents of a position
-         * from outside, as {@code Position} is an inner class of {@code Board}.
-         *
-         * @param row the row index of the cell
-         * @param col the column index of the cell
-         * @param piece a {@code Piece}
-         * @param pieceMoveCount the number of moves made by {@code piece} before
-         * @see #set(Cell, Piece, int)
-         */
-        private void set(int row, int col, Piece piece, int pieceMoveCount) {
             if (piece == null) {
-                clear(row, col);
+                clear(cell);
             } else {
+                int row = cell.getRow();
+                int col = cell.getCol();
                 grid[row][col] = piece;
                 checker.set(row, col);
                 movesMade[row][col] = pieceMoveCount + 1;
-                Cell cell = new Cell(row, col);
-                int index = piece.getColor() == Color.WHITE ? 0 : 1;
-                pieces[index].add(cell);
                 if (piece instanceof King) {
+                    int index = piece.getColor() == Color.WHITE ? 0 : 1;
                     kings[index] = cell;
                 }
             }
@@ -177,29 +184,19 @@ public class Board {
         /**
          * Private method that clears the contents of a given cell.
          *
-         * @param row the row index of the cell
-         * @param col the column index of the cell
-         * @see #clear(Cell)
+         * @param cell a {@code Cell}
          */
-        private void clear(int row, int col) {
+        private void clear(Cell cell) {
+            int row = cell.getRow();
+            int col = cell.getCol();
             Piece piece = grid[row][col];
-            if (piece != null) {
+            if (piece instanceof King) {
                 int index = piece.getColor() == Color.WHITE ? 0 : 1;
-                pieces[index].remove(new Cell(row, col));
+                kings[index] = null;
             }
             grid[row][col] = null;
             checker.remove(row, col);
             movesMade[row][col] = 0;
-        }
-
-        /**
-         * Private method that clears the contents of a given cell.
-         *
-         * @param cell a {@code Cell}
-         * @see #clear(int, int)
-         */
-        private void clear(Cell cell) {
-            clear(cell.getRow(), cell.getCol());
         }
 
         /**
@@ -221,8 +218,8 @@ public class Board {
         /**
          * Private method that cancels a move from a source cell to a target cell.<br><br>
          *
-         * Since move counts are affected in a non-obvious way, this method should be called after a corresponding call
-         * to {@link #move(Cell, Cell)}.
+         * Since move counts are affected in a non-obvious way, this method is intended to be called after a
+         * corresponding call to {@link #move(Cell, Cell)}.
          *
          * @param start the former initial cell of the piece
          * @param target the former target cell of the piece
@@ -242,7 +239,7 @@ public class Board {
          * @return {@code true} if {@code cell} is occupied, or {@code false} otherwise
          */
         public boolean isOccupied(Cell cell) {
-            return get(cell) != null;
+            return cell.withinBounds() && get(cell) != null;
         }
 
         /**
@@ -344,8 +341,11 @@ public class Board {
          * @return {@code true} if the piece located at {@code start} attacks {@code target}, or {@code false} otherwise
          */
         public boolean attacks(Cell start, Cell target) {
+            if (start == null) {
+                return false;
+            }
             Piece piece = get(start);
-            if (piece == null) {
+            if (piece == null || target == null) {
                 return false;
             }
             int dr = target.getRow() - start.getRow();
@@ -367,8 +367,10 @@ public class Board {
         public Pair totalAttackCount(Cell cell) {
             int white = 0;
             int black = 0;
-            for (Cell c : pieces[0]) white += attacks(c, cell) ? 1 : 0;
-            for (Cell c : pieces[1]) black += attacks(c, cell) ? 1 : 0;
+            HashSet<Cell> whitePieces = getPieceList(Color.WHITE);
+            HashSet<Cell> blackPieces = getPieceList(Color.BLACK);
+            for (Cell c : whitePieces) white += attacks(c, cell) ? 1 : 0;
+            for (Cell c : blackPieces) black += attacks(c, cell) ? 1 : 0;
             return new Pair(white, black);
         }
 
@@ -395,6 +397,42 @@ public class Board {
             return isAttacked(getKingCell(color), Color.getOppositeColor(color));
         }
 
+        public boolean isKingInCheckmate(Color color) {
+            return isKingInCheck(color) && getLegalMoves(color).isEmpty();
+        }
+
+        public boolean isStalemate(Color color) {
+            return !isKingInCheck(color) && getLegalMoves(color).isEmpty();
+        }
+
+        /**
+         * Determines whether a move does not put one's own king in check.<br><br>
+         *
+         * Used to determine the entire legality of non-basic chess moves, whose initial legality is already determined
+         * to be true.
+         *
+         * @param move a {@code Move}
+         * @return {@code true} if {@code move} does not put one's own king in check, or {@code false} otherwise
+         */
+        public boolean isKingSafeMove(Move move) {
+            Cell start = move.getStart();
+            Cell target = move.getTarget();
+            Piece targetPiece = get(target);
+            int targetCnt = movesMade(target);
+            Color color = getColor(start);
+            boolean verdict = true;
+            // Pretend we made the move and check whether our king becomes in check, then revert the move
+            move(start, target);
+            if (isKingInCheck(color)) {
+                verdict = false;
+            }
+            unmove(start, target);
+            if (targetPiece != null) {
+                set(target, targetPiece, targetCnt - 1);
+            }
+            return verdict;
+        }
+
         /**
          * Determines whether a move is legal. Also takes as parameter the last move in order to check the legality of
          * a possible en passant capture.
@@ -406,6 +444,9 @@ public class Board {
         public boolean isLegalMove(Move move, Move lastMove) {
             Cell start = move.getStart();
             Cell target = move.getTarget();
+            if (!start.withinBounds() || !target.withinBounds()) {
+                return false;
+            }
             Piece piece = get(start);
             int dr = target.getRow() - start.getRow();
             int dc = target.getCol() - start.getCol();
@@ -414,7 +455,7 @@ public class Board {
                 // Either start cell is empty or path to destination cell is blocked (and piece cannot jump)
                 verdict = false;
             } else {
-                List<Move> additionalMoves = piece.getAdditionalLegalMoves(start, this, lastMove);
+                HashSet<Move> additionalMoves = piece.getAdditionalLegalMoves(start, this, lastMove);
                 if (additionalMoves.contains(move)) {
                     verdict = true;
                 } else if (isOccupied(target)) {
@@ -426,20 +467,9 @@ public class Board {
                 }
             }
             if (verdict) {
-                Piece targetPiece = get(target);
-                int targetCnt = movesMade(target);
-                Color color = getColor(start);
-                // Pretend we made the move and check whether our king becomes in check, then revert the move
-                move(start, target);
-                if (isKingInCheck(color)) {
-                    verdict = false;
-                }
-                unmove(start, target);
-                if (targetPiece != null) {
-                    set(target, targetPiece, targetCnt - 1);
-                }
+                return isKingSafeMove(move);
             }
-            return verdict;
+            return false;
         }
 
         /**
@@ -453,6 +483,20 @@ public class Board {
          */
         public boolean isLegalMove(Move move) {
             return isLegalMove(move, lastMove);
+        }
+
+        public HashSet<Move> getLegalMoves(Cell cell) {
+            Piece piece = get(cell);
+            return piece.getLegalMoves(cell, this, lastMove);
+        }
+
+        public HashSet<Move> getLegalMoves(Color color) {
+            HashSet<Cell> pieceList = getPieceList(color);
+            HashSet<Move> moves = new HashSet<>();
+            for (Cell cell : pieceList) {
+                moves.addAll(getLegalMoves(cell));
+            }
+            return moves;
         }
 
         /**
@@ -505,15 +549,36 @@ public class Board {
             if (category == MoveCategory.ORDINARY) {
                 Cell start = move.getStart();
                 Cell target = move.getTarget();
+                Piece piece = move.getPiece();
                 position.move(start, target);
                 position.lastMove = move;
+                int dr = target.getRow() - start.getRow();
+                int dc = target.getCol() - start.getCol();
+                if (piece instanceof Pawn && piece.validCaptureDelta(dr, dc)) {
+                    // En passant
+                    position.clear(start.shift(0, dc));
+                }
             } else if (category == MoveCategory.O_O || category == MoveCategory.O_O_O) {
                 Cell king = move.getStart();
                 int rookColumn = (category == MoveCategory.O_O ? SIZE - 1 : 0);
                 Cell rook = new Cell(king.getRow(), rookColumn);
                 int multiplier = category == MoveCategory.O_O ? 1 : -1;
-                position.move(king, king.shift(0, CASTLING_DELTA * multiplier));
                 position.move(rook, king.shift(0, multiplier));
+            } else {
+                Cell start = move.getStart();
+                Cell target = move.getTarget();
+                Color color = position.getColor(start);
+                position.move(start, target);
+                position.lastMove = move;
+                if (category == MoveCategory.PROMOTE_TO_KNIGHT) {
+                    position.set(target, new Knight(color), position.movesMade(target) - 1);
+                } else if (category == MoveCategory.PROMOTE_TO_BISHOP) {
+                    position.set(target, new Bishop(color), position.movesMade(target) - 1);
+                } else if (category == MoveCategory.PROMOTE_TO_ROOK) {
+                    position.set(target, new Rook(color), position.movesMade(target) - 1);
+                } else {
+                    position.set(target, new Queen(color), position.movesMade(target) - 1);
+                }
             }
             return true;
         }

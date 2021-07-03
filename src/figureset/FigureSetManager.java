@@ -1,5 +1,6 @@
 package figureset;
 
+import board.Color;
 import pieces.*;
 
 public class FigureSetManager {
@@ -17,21 +18,29 @@ public class FigureSetManager {
         figureSet = set;
     }
 
-    public static char getSymbol(Piece piece) {
+    private static char getSymbol(Piece piece, Color color) {
         if (piece instanceof Pawn) {
-            return figureSet.pawn(piece.getColor());
+            return figureSet.pawn(color);
         } else if (piece instanceof Rook) {
-            return figureSet.rook(piece.getColor());
+            return figureSet.rook(color);
         } else if (piece instanceof Knight) {
-            return figureSet.knight(piece.getColor());
+            return figureSet.knight(color);
         } else if (piece instanceof Bishop) {
-            return figureSet.bishop(piece.getColor());
+            return figureSet.bishop(color);
         } else if (piece instanceof Queen) {
-            return figureSet.queen(piece.getColor());
+            return figureSet.queen(color);
         } else if (piece instanceof King) {
-            return figureSet.king(piece.getColor());
+            return figureSet.king(color);
         } else {
             throw new UnsupportedOperationException();
         }
+    }
+
+    public static char getSymbol(Piece piece) {
+        return getSymbol(piece, piece.getColor());
+    }
+
+    public static char getNotationSymbol(Piece piece) {
+        return getSymbol(piece, Color.WHITE);
     }
 }

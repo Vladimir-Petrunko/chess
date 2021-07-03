@@ -1,11 +1,15 @@
 import board.*;
 import player.*;
-import java.io.*;
-import java.util.*;
+import utils.*;
 
 public class Main {
+
     public static void main(String[] args) {
-        Game game = new Game(new HumanPlayer(), new HumanPlayer());
-        game.play();
+        Player white = new RandomPlayer("Polina");
+        Player black = new RandomPlayer("Natasha");
+        Game game = new Game(white, black);
+        Status status = game.play();
+        System.out.println(game.getGameNotation());
+        System.out.println(game.getFinalPosition());
     }
 }

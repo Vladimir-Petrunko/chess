@@ -1,8 +1,9 @@
 package board;
 
-import pieces.Piece;
-import pieces.King;
-import pieces.Pawn;
+import figureset.FigureSet;
+import figureset.FigureSetManager;
+import board.Board.Position;
+import pieces.*;
 
 import static utils.Global.SIZE;
 
@@ -159,10 +160,21 @@ public class Move {
                         case "Q" -> category = MoveCategory.PROMOTE_TO_QUEEN;
                         case "R" -> category = MoveCategory.PROMOTE_TO_ROOK;
                         case "B" -> category = MoveCategory.PROMOTE_TO_BISHOP;
-                        default -> category = MoveCategory.PROMOTE_TO_KNIGHT; // case "N"
+                        case "N" -> category = MoveCategory.PROMOTE_TO_KNIGHT;
+                        default -> category = MoveCategory.INVALID;
                     }
                 }
             }
+        }
+    }
+
+    public boolean isCapture(Position position) {
+        if (piece instanceof Pawn) {
+            int dr = target.getRow() - start.getRow();
+            int dc = target.getCol() - start.getCol();
+            return piece.validCaptureDelta(dr, dc);
+        } else {
+            return position.isOccupied(target);
         }
     }
 
@@ -174,7 +186,7 @@ public class Move {
     public boolean equals(Object other) {
         if (other instanceof Move) {
             Move move = (Move) other;
-            return start.equals(move.start) && target.equals(move.target) && piece.getSymbol() == move.piece.getSymbol();
+            return toString().equals(move.toString());
         }
         return false;
     }
@@ -191,7 +203,24 @@ public class Move {
      */
     @Override
     public String toString() {
-        return piece.getSymbol() + "" + start + "-" + target;
+        if (category == MoveCategory.O_O) {
+            return "0-0";
+        } else if (category == MoveCategory.O_O_O) {
+            return "0-0-0";
+        } else {
+            String basic = FigureSetManager.getNotationSymbol(piece) + "" + start + "-" + target;
+            if (category == MoveCategory.PROMOTE_TO_KNIGHT) {
+                return basic + "=" + FigureSetManager.getNotationSymbol(new Knight(Color.WHITE));
+            } else if (category == MoveCategory.PROMOTE_TO_BISHOP) {
+                return basic + "=" + FigureSetManager.getNotationSymbol(new Bishop(Color.WHITE));
+            } else if (category == MoveCategory.PROMOTE_TO_ROOK) {
+                return basic + "=" + FigureSetManager.getNotationSymbol(new Rook(Color.WHITE));
+            } else if (category == MoveCategory.PROMOTE_TO_QUEEN) {
+                return basic + "=" + FigureSetManager.getNotationSymbol(new Queen(Color.WHITE));
+            } else {
+                return basic;
+            }
+        }
     }
 
     /**

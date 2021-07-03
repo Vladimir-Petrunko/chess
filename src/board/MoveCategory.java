@@ -5,6 +5,7 @@ public enum MoveCategory {
     // Should be self-explanatory enough
     UNCATEGORIZED,
     ORDINARY,
+    INVALID,
     O_O,
     O_O_O,
     PROMOTE_TO_QUEEN,

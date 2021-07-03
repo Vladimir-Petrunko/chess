@@ -1,7 +1,6 @@
 package pieces;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.HashSet;
 import board.Board.Position;
 import board.Cell;
 import board.Color;
@@ -12,8 +11,17 @@ import utils.Pair;
 import static utils.Global.SIZE;
 
 public class Pawn extends Piece {
-    private static final List<Pair> whiteDeltas = List.of(new Pair(1, 0));
-    private static final List<Pair> blackDeltas = List.of(new Pair(-1, 0));
+    private static final HashSet<Pair> whiteDeltas = new HashSet<>();
+    private static final HashSet<Pair> blackDeltas = new HashSet<>();
+
+    static {
+        whiteDeltas.add(new Pair(-1, 0));
+        whiteDeltas.add(new Pair(-1, -1));
+        whiteDeltas.add(new Pair(-1, 1));
+        blackDeltas.add(new Pair(1, 0));
+        blackDeltas.add(new Pair(1, -1));
+        blackDeltas.add(new Pair(1, 1));
+    }
 
     private final int dir; // direction of motion: -1 (to decreasing row indices) or 1 (to increasing row indices)
     private final int nextPromotion; // index of row just preceding promotion row
@@ -30,7 +38,7 @@ public class Pawn extends Piece {
     }
 
     @Override
-    public List<Pair> getBasicDeltas() {
+    public HashSet<Pair> getBasicDeltas() {
         return color == Color.WHITE ? whiteDeltas : blackDeltas;
     }
 
@@ -57,28 +65,28 @@ public class Pawn extends Piece {
      *
      * @return a list of all possible promotion moves of this pawn from {@code initial} to {@code target}
      */
-    private List<Move> checkPromotion(boolean condition, Cell initial, Cell target) {
+    private HashSet<Move> checkPromotion(boolean condition, Cell initial, Cell target) {
         if (condition) {
-            return List.of(
-                new Move(initial, target, this, MoveCategory.PROMOTE_TO_QUEEN),
-                new Move(initial, target, this, MoveCategory.PROMOTE_TO_ROOK),
-                new Move(initial, target, this, MoveCategory.PROMOTE_TO_BISHOP),
-                new Move(initial, target, this, MoveCategory.PROMOTE_TO_KNIGHT)
-            );
+            HashSet<Move> set = new HashSet<>();
+            set.add(new Move(initial, target, this, MoveCategory.PROMOTE_TO_QUEEN));
+            set.add(new Move(initial, target, this, MoveCategory.PROMOTE_TO_BISHOP));
+            set.add(new Move(initial, target, this, MoveCategory.PROMOTE_TO_KNIGHT));
+            set.add(new Move(initial, target, this, MoveCategory.PROMOTE_TO_ROOK));
+            return set;
         } else {
-            return new ArrayList<>();
+            return new HashSet<>();
         }
     }
 
     @Override
-    public List<Move> getAdditionalLegalMoves(Cell initial, Position position, Move lastMove) {
-        List<Move> list = new ArrayList<>();
+    public HashSet<Move> getAdditionalLegalMoves(Cell initial, Position position, Move lastMove) {
+        HashSet<Move> list = new HashSet<>();
         // Double advance
         int initRow = SIZE - nextPromotion - 1;
         if (initial.getRow() == initRow) {
             // Pawn hasn't moved yet
             Cell landingCell = initial.shift(dir * 2, 0);
-            if (position.canOccupy(this, landingCell) && position.isFreePathBetween(initial, landingCell)) {
+            if (!position.isOccupied(landingCell) && position.isFreePathBetween(initial, landingCell)) {
                 list.add(new Move(initial, landingCell, position.get(initial)));
             }
         }
@@ -92,9 +100,9 @@ public class Pawn extends Piece {
             Cell b = initial.shift(dir, 0);
             Cell c = initial.shift(dir, 1);
             // If the pawn changes its column, then it must capture, otherwise it must not capture
-            List<Move> left = checkPromotion(position.isOccupied(a), initial, a);
-            List<Move> straight = checkPromotion(!position.isOccupied(b), initial, b);
-            List<Move> right = checkPromotion(position.isOccupied(c), initial, c);
+            HashSet<Move> left = checkPromotion(position.isOccupied(a), initial, a);
+            HashSet<Move> straight = checkPromotion(!position.isOccupied(b), initial, b);
+            HashSet<Move> right = checkPromotion(position.isOccupied(c), initial, c);
             list.addAll(left);
             list.addAll(straight);
             list.addAll(right);
@@ -108,6 +116,12 @@ public class Pawn extends Piece {
             Cell landingCell = initial.shift(dir, offset);
             list.add(new Move(initial, landingCell, this));
         }
-        return list;
+        HashSet<Move> legal = new HashSet<>();
+        for (Move move : list) {
+            if (position.isKingSafeMove(move)) {
+                legal.add(move);
+            }
+        }
+        return legal;
     }
 }
