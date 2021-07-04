@@ -554,7 +554,7 @@ public class Board {
                 position.lastMove = move;
                 int dr = target.getRow() - start.getRow();
                 int dc = target.getCol() - start.getCol();
-                if (piece instanceof Pawn && piece.validCaptureDelta(dr, dc)) {
+                if (piece instanceof Pawn && piece.validCaptureDelta(dr, dc) && !position.isOccupied(target)) {
                     // En passant
                     position.clear(start.shift(0, dc));
                 }

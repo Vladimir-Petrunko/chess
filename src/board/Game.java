@@ -50,9 +50,9 @@ public class Game {
         } else {
             halfMovesUntilDraw--;
         }
-        String str = move.toString();
+        StringBuilder str = new StringBuilder(move.toString());
         while (str.length() < 10) {
-            str += ' ';
+            str.append(' ');
         }
         if (currentTurn == Color.WHITE) {
             if (moveNumber != 0) notation.append('\n');
@@ -61,8 +61,10 @@ public class Game {
                 notation.append("     ");
             } else if (moveNumber < 100) {
                 notation.append("    ");
-            } else {
+            } else if (moveNumber < 1000) {
                 notation.append("   ");
+            } else {
+                notation.append("  ");
             }
             notation.append(str);
         } else {
