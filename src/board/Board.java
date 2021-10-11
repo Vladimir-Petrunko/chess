@@ -3,9 +3,8 @@ package board;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import pieces.*;
-import utils.FreePathChecker;
 import utils.Pair;
-import static utils.Global.CASTLING_DELTA;
+
 import static utils.Global.SIZE;
 
 public class Board {
@@ -22,7 +21,6 @@ public class Board {
         private final Piece[][] grid = new Piece[SIZE][SIZE];
         private final int[][] movesMade = new int[SIZE][SIZE];
         private final Cell[] kings = new Cell[2];
-        private final FreePathChecker checker = new FreePathChecker(SIZE);
         private Move lastMove = null;
 
         /**
@@ -97,6 +95,35 @@ public class Board {
         }
 
         /**
+         * Initializes a new {@code Position} from a custom piece arrangement and castling/last-move info
+         *
+         * @param grid a 2-dimensional array of pieces
+         * @param wk can the white king castle kingside
+         * @param wq can the white queen castle queenside
+         * @param bk can the black king castle kingside
+         * @param bq can the black queen castle queenside
+         * @param last the last move made
+         */
+        public Position(Piece[][] grid, boolean wk, boolean wq, boolean bk, boolean bq, Move last) {
+            this(grid);
+            lastMove = last;
+            if (grid[0][0] instanceof Rook && grid[0][0].getColor() == Color.BLACK && !bq) {
+                movesMade[0][0] = 1;
+            }
+            if (grid[0][SIZE - 1] instanceof Rook && grid[0][SIZE - 1].getColor() == Color.BLACK && !bk) {
+                movesMade[0][SIZE - 1] = 1;
+            }
+            if (grid[SIZE - 1][0] instanceof Rook && grid[SIZE - 1][0].getColor() == Color.WHITE && !wq) {
+                movesMade[SIZE - 1][0] = 1;
+            }
+            if (grid[SIZE - 1][SIZE - 1] instanceof Rook && grid[SIZE - 1][SIZE - 1].getColor() == Color.WHITE && !wk) {
+                movesMade[SIZE - 1][SIZE - 1] = 1;
+            }
+            // Possibly, `movesMade` does not reflect the true move count, but this constructor assumes that a lone
+            // `Position` is created, with no connection to any `Board` or `Game`.
+        }
+
+        /**
          * Gets the last move made in this position.
          *
          * @return the last move made in this position
@@ -105,7 +132,7 @@ public class Board {
             return lastMove;
         }
 
-        // TODO: avoid looping of whole board every time (beware of ConcurrentModificationException when updating info dynamically)
+        // TODO: avoid looping of whole board every time (beware of ConcurrentModificationException)
         /**
          * Returns the list of pieces of a given color
          *
@@ -172,7 +199,6 @@ public class Board {
                 int row = cell.getRow();
                 int col = cell.getCol();
                 grid[row][col] = piece;
-                checker.set(row, col);
                 movesMade[row][col] = pieceMoveCount + 1;
                 if (piece instanceof King) {
                     int index = piece.getColor() == Color.WHITE ? 0 : 1;
@@ -195,7 +221,6 @@ public class Board {
                 kings[index] = null;
             }
             grid[row][col] = null;
-            checker.remove(row, col);
             movesMade[row][col] = 0;
         }
 
@@ -292,9 +317,40 @@ public class Board {
         }
 
         /**
+         * Auxiliary method that determines whether there is a free (that is, not consisting of pieces of any color)
+         * horizontal, vertical or diagonal path between two cells passed as parameters. Both endpoints are exclusive,
+         * i.e. only the path strictly between the two cells is considered.
+         * @param start the beginning of the path
+         * @param target the end of the path
+         * @param dr the row delta between two adjacent cells in the path
+         * @param dc the column delta between two adjacent cells in the path
+         * @return {@code true} if there is a free path between {@code first} and {@code second}, exclusive, or {@code
+         * false} otherwise
+         */
+        private boolean isFreePathBetween(Cell start, Cell target, int dr, int dc) {
+            if (start.equals(target)) {
+                return true;
+            }
+            int startRow = start.getRow();
+            int startCol = start.getCol();
+            int targetRow = target.getRow();
+            int targetCol = target.getCol();
+            while (true) {
+                startRow += dr;
+                startCol += dc;
+                if (startRow == targetRow && startCol == targetCol) {
+                    return true;
+                }
+                if (isOccupied(new Cell(startRow, startCol))) {
+                    return false;
+                }
+            }
+        }
+
+        /**
          * Determines whether there is a free (that is, not consisting of pieces of any color) horizontal, vertical or
          * diagonal path between two cells passed as parameters. Both endpoints are exclusive, i.e. only the path
-         * strictly between the two cells matters.
+         * strictly between the two cells is considered.
          *
          * @param first one endpoint
          * @param second the other endpoint
@@ -302,7 +358,33 @@ public class Board {
          * false} otherwise
          */
         public boolean isFreePathBetween(Cell first, Cell second) {
-            return checker.isFreePathBetween(first, second);
+            if (first.getRow() == second.getRow()) {
+                // Cells on one horizontal path
+                if (first.getCol() > second.getCol()) {
+                    return isFreePathBetween(second, first);
+                }
+                return isFreePathBetween(first, second, 0, 1);
+            } else if (first.getCol() == second.getCol()) {
+                // Cells on one vertical path
+                if (first.getRow() > second.getRow()) {
+                    return isFreePathBetween(second, first);
+                }
+                return isFreePathBetween(first, second, 1, 0);
+            } else if (first.getCol() - first.getRow() == second.getCol() - second.getRow()) {
+                // Cells on one diagonal; top-left <-> bottom-right
+                if (first.getRow() > second.getRow()) {
+                    return isFreePathBetween(second, first);
+                }
+                return isFreePathBetween(first, second, 1, 1);
+            } else if (first.getCol() + first.getRow() == second.getCol() + second.getRow()) {
+                // Cells on one diagonal; top-right <-> bottom-left
+                if (first.getRow() > second.getRow()) {
+                    return isFreePathBetween(second, first);
+                }
+                return isFreePathBetween(first, second, 1, -1);
+            }
+            throw new IllegalArgumentException("input cells " + first + " and " + second + " are not connected with" +
+                    " a horizontal, vertical, or diagonal path");
         }
 
         /**
@@ -350,11 +432,13 @@ public class Board {
             }
             int dr = target.getRow() - start.getRow();
             int dc = target.getCol() - start.getCol();
-            boolean flag = piece.validCaptureDelta(dr, dc);
-            if (!piece.canJump()) {
-                flag &= isFreePathBetween(start, target);
+            if (!piece.validCaptureDelta(dr, dc)) {
+                return false;
             }
-            return flag;
+            if (!piece.canJump() && !(piece instanceof Pawn)) {
+                return isFreePathBetween(start, target);
+            }
+            return true;
         }
 
         /**
@@ -516,6 +600,19 @@ public class Board {
                 sb.append((char)('a' + i)).append('\t'); // Column indices
             }
             return sb.toString();
+        }
+
+        @Override
+        public Position clone() {
+            Position pos = new Position(grid);
+            for (int i = 0; i < SIZE; i++) {
+                System.arraycopy(movesMade[i], 0, pos.movesMade[i], 0, SIZE);
+            }
+            // Cells are immutable, so possible to assign
+            pos.kings[0] = kings[0];
+            pos.kings[1] = kings[1];
+            pos.lastMove = lastMove;
+            return pos;
         }
     }
 

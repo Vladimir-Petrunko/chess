@@ -1,24 +1,42 @@
 import board.*;
 import player.*;
 import utils.*;
+import pieces.*;
 
 public class Main {
 
     public static void main(String[] args) {
-        Player white = new RandomPlayer("Polina");
-        Player black = new RandomPlayer("Natasha");
-        int w = 0;
-        int d = 0;
-        int b = 0;
-        for (int i = 0; i < 100; i++) {
-            Game game = new Game(white, black);
-            Status status = game.play();
-            if (status == Status.WHITE_WON) w++;
-            if (status == Status.BLACK_WON) b++;
-            if (status == Status.DRAW) d++;
+        Piece[][] grid = new Piece[][]{
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, new King(Color.BLACK), null, null, null, null},
+                {null, null, null, new Pawn(Color.BLACK), null, null, null, null},
+                {null, null, null, new Pawn(Color.WHITE), null, null, null, null},
+                {null, null, null, new King(Color.WHITE), null, null, null, null},
+                {null, null, new Queen(Color.BLACK), null, null, null, null, null},
+                {null, null, null, null, new Knight(Color.BLACK), null, null, null}
+        };
+        Board.Position position = new Board.Position(grid);
+        System.out.println(position);
+        System.out.println("White pieces:");
+        java.util.HashSet<Cell> pl = position.getPieceList(Color.WHITE);
+        for (Cell cell : pl) {
+            System.out.print("* " + cell + ": ");
+            java.util.HashSet<Move> hs = position.getLegalMoves(cell);
+            for (Move move : hs) {
+                System.out.print(move + ", ");
+            }
+            System.out.println();
         }
-        System.out.println("White won: " + w);
-        System.out.println("Black won: " + b);
-        System.out.println("Draw: " + d);
+        System.out.println("Black pieces:");
+        pl = position.getPieceList(Color.BLACK);
+        for (Cell cell : pl) {
+            System.out.print("* " + cell + ": ");
+            java.util.HashSet<Move> hs = position.getLegalMoves(cell);
+            for (Move move : hs) {
+                System.out.print(move + ", ");
+            }
+            System.out.println();
+        }
     }
 }

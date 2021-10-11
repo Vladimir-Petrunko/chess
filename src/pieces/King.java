@@ -60,6 +60,9 @@ public class King extends Piece {
         if (!position.hasMoved(kingCell) &&
             !position.isKingInCheck(color) &&
             !position.hasMoved(rookCell) &&
+            position.get(rookCell) instanceof Rook &&
+            position.getColor(rookCell) == position.getColor(kingCell) &&
+            // Last two conditions - in case a Position was created separately
             position.isHorizontalRangeUnattacked(kingCell, landingCell, color)) {
             // All necessary conditions for castling are satisfied
             return new Move(kingCell, landingCell, this);

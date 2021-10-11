@@ -10,7 +10,7 @@ public class Game {
     private final Player white, black;
     private Color currentTurn = Color.WHITE;
     private Status gameResult = Status.UNFINISHED;
-    private StringBuilder notation = new StringBuilder();
+    private final StringBuilder notation = new StringBuilder();
     private int moveNumber = 1;
     private int halfMovesUntilDraw = 100;
 
